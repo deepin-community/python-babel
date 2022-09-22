@@ -1,0 +1,41 @@
+From: =?utf-8?q?H=C3=A5vard_Flaget_Aasen?= <haavard_aasen@yahoo.no>
+Date: Sun, 12 Jan 2020 23:43:07 +0100
+Subject: remove google fonts
+
+---
+ docs/_themes/babel/layout.html        | 2 --
+ docs/_themes/babel/static/babel.css_t | 3 +--
+ 2 files changed, 1 insertion(+), 4 deletions(-)
+
+diff --git a/docs/_themes/babel/layout.html b/docs/_themes/babel/layout.html
+index 1fd054e..5caa4e2 100644
+--- a/docs/_themes/babel/layout.html
++++ b/docs/_themes/babel/layout.html
+@@ -6,8 +6,6 @@
+   {% endif %}
+   <link media="only screen and (max-device-width: 480px)" href="{{
+     pathto('_static/small_flask.css', 1) }}" type= "text/css" rel="stylesheet" />
+-  <link href="//fonts.googleapis.com/css?family=Bree+Serif" rel="stylesheet" type="text/css">
+-  <link href="//fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet" type="text/css">
+ {% endblock %}
+ {%- block relbar2 %}{% endblock %}
+ {% block header %}
+diff --git a/docs/_themes/babel/static/babel.css_t b/docs/_themes/babel/static/babel.css_t
+index bd1a1cd..75472c1 100644
+--- a/docs/_themes/babel/static/babel.css_t
++++ b/docs/_themes/babel/static/babel.css_t
+@@ -9,13 +9,12 @@
+ {% set page_width = '940px' %}
+ {% set sidebar_width = '220px' %}
+ {% set text_font = "Verdana, Helvetica, sans-serif" %}
+-{% set title_font = "'Bree Serif', Georgia, serif" %}
++{% set title_font = "Georgia, serif" %}
+ {% set link_color = '#b00' %}
+ {% set hover_color = '#FC5E1E' %}
+ 
+ @import url("basic.css");
+ 
+-@import url(http://fonts.googleapis.com/css?family=Bree+Serif);
+ 
+ /* -- page layout ----------------------------------------------------------- */
+ 

@@ -1,0 +1,7 @@
+fix-sphinx-conf.py-to-avoid-intersphinx.patch
+0002-remove-google-fonts.patch
+0003-Revert-upstream-issue-621.patch
+0004-Fix-utils-test.patch
+0005-fix-methods-changes-wrt-py3.9.patch
+0006-remove-doctest-deprecation.patch
+CVE-2021-20095_Run_locale_identifiers_through_os.path.basename.patch

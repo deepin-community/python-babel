@@ -1,0 +1,2 @@
+babel/global.dat	usr/share/python-babel-localedata
+babel/locale-data/*	usr/share/python-babel-localedata/locale-data

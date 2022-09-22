@@ -1,0 +1,10 @@
+Document: python-babel
+Title: Python Babel documentation
+Author: Edgewall Software
+Abstract: Babel Python module provides tools for internationalizing Python
+ applications.
+Section: Programming/Python
+
+Format: HTML
+Index: /usr/share/doc/python-babel-doc/html/index.html
+Files: /usr/share/doc/python-babel-doc/html/*.html /usr/share/doc/python-babel-doc/html/api/*.html

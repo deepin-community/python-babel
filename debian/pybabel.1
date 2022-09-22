@@ -1,0 +1,43 @@
+.\" Manpage created by Christoph Haas <haas@debian.org>
+.TH PYBABEL "1" "January 2008"
+.SH NAME
+pybabel \- command line tool for working with message catalogs
+.SH SYNOPSIS
+.B pybabel
+\fIcommand \fR[\fIoptions\fR] [\fIargs\fR]
+.SH OPTIONS
+.TP
+\fB\-\-version\fR
+show program's version number and exit
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+show this help message and exit
+.TP
+\fB\-\-list\-locales\fR
+print all known locales and exit
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+print as much as possible
+.TP
+\fB\-q\fR, \fB\-\-quiet\fR
+print as little as possible
+.SS "commands:"
+.TP
+compile
+compile message catalogs to MO files
+.TP
+extract
+extract messages from source files and generate a POT file
+.TP
+init
+create new message catalogs from a POT file
+.TP
+update
+update existing message catalogs from a POT file
+.PP
+To learn more about the commands run e.g. \fIpybabel compile \-\-help\fR.
+.SH AUTHORS
+The original program was written by Edgewall Software. This manual page was
+provided by Christoph Haas <haas@debian.org> for the Debian GNU/Linux system
+but may freely be used by anyone.
+

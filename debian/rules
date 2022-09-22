@@ -1,0 +1,51 @@
+#!/usr/bin/make -f
+
+export LC_TIME=C
+export LANGUAGE=C
+
+PYTHON3S:=$(shell py3versions -sv)
+
+%:
+	dh $@ --buildsystem=pybuild --with python3,sphinxdoc
+
+override_dh_auto_build:
+	dh_auto_build
+	# Generate the localedata folder data out of the xml files
+	# downloaded in debian/repack
+	mkdir -pv babel/locale-data/
+	python3 scripts/import_cldr.py common
+
+override_dh_auto_install:
+	set -e && for pyvers in $(PYTHON3S); do \
+		python$$pyvers setup.py install --install-layout=deb \
+			--root $(CURDIR)/debian/python3-babel; \
+	done
+	mv debian/python3-babel/usr/bin/pybabel debian/python3-babel/usr/bin/pybabel-python3
+
+override_dh_python3:
+	dh_python3 --shebang=/usr/bin/python3
+	rm -r debian/python3-babel/usr/lib/python3/dist-packages/babel/locale-data ; \
+	ln -s ../../../../share/python-babel-localedata/locale-data debian/python3-babel/usr/lib/python3/dist-packages/babel/locale-data ; \
+	rm -r debian/python3-babel/usr/lib/python3/dist-packages/babel/global.dat ; \
+	ln -s ../../../../share/python-babel-localedata/global.dat debian/python3-babel/usr/lib/python3/dist-packages/babel/global.dat ; \
+
+override_dh_installdocs:
+	python3 -m sphinx docs docs/_build
+	dh_installdocs
+	mkdir -p debian/python-babel-doc/usr/share/doc/python-babel-doc/html
+	sed -i "s/locale='en_US_POSIX'/locale=[system locale]/g" docs/_build/*/*.html
+	cp -auxf docs/_build/* debian/python-babel-doc/usr/share/doc/python-babel-doc/html
+	cp AUTHORS debian/python-babel-doc/usr/share/doc/python-babel-doc/
+
+override_dh_sphinxdoc:
+	dh_sphinxdoc
+	find debian/python-babel-doc/usr/share/doc/python-babel-doc/html/_sources/ -name license*.txt -delete
+
+override_dh_auto_clean:
+	rm -rf docs/_build build Babel.egg-info
+	dh_auto_clean
+
+override_dh_auto_test:
+ifeq (,$(findstring nocheck, $(DEB_BUILD_OPTIONS)))
+	LC_ALL=C py.test-3
+endif
