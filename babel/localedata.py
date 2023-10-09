@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
     babel.localedata
     ~~~~~~~~~~~~~~~~
@@ -8,20 +7,23 @@
     :note: The `Locale` class, which uses this module under the hood, provides a
            more convenient interface for accessing the locale data.
 
-    :copyright: (c) 2013-2019 by the Babel Team.
+    :copyright: (c) 2013-2022 by the Babel Team.
     :license: BSD, see LICENSE for more details.
 """
 
+import pickle
 import os
+import re
+import sys
 import threading
+from collections import abc
 from itertools import chain
-
-from babel._compat import pickle, string_types, abc
 
 
 _cache = {}
 _cache_lock = threading.RLock()
 _dirname = os.path.join(os.path.dirname(__file__), 'locale-data')
+_windows_reserved_name_re = re.compile("^(con|prn|aux|nul|com[0-9]|lpt[0-9])$", re.I)
 
 
 def normalize_locale(name):
@@ -30,12 +32,28 @@ def normalize_locale(name):
     Returns the normalized locale ID string or `None` if the ID is not
     recognized.
     """
-    if not name or not isinstance(name, string_types):
+    if not name or not isinstance(name, str):
         return None
     name = name.strip().lower()
     for locale_id in chain.from_iterable([_cache, locale_identifiers()]):
         if name == locale_id.lower():
             return locale_id
+
+
+def resolve_locale_filename(name):
+    """
+    Resolve a locale identifier to a `.dat` path on disk.
+    """
+
+    # Clean up any possible relative paths.
+    name = os.path.basename(name)
+
+    # Ensure we're not left with one of the Windows reserved names.
+    if sys.platform == "win32" and _windows_reserved_name_re.match(os.path.splitext(name)[0]):
+        raise ValueError("Name %s is invalid on Windows" % name)
+
+    # Build the path.
+    return os.path.join(_dirname, '%s.dat' % name)
 
 
 def exists(name):
@@ -45,11 +63,11 @@ def exists(name):
 
     :param name: the locale identifier string
     """
-    if not name or not isinstance(name, string_types):
+    if not name or not isinstance(name, str):
         return False
     if name in _cache:
         return True
-    file_found = os.path.exists(os.path.join(_dirname, '%s.dat' % name))
+    file_found = os.path.exists(resolve_locale_filename(name))
     return True if file_found else bool(normalize_locale(name))
 
 
@@ -102,6 +120,7 @@ def load(name, merge_inherited=True):
     :raise `IOError`: if no locale data file is found for the given locale
                       identifer, or one of the locales it inherits from
     """
+    name = os.path.basename(name)
     _cache_lock.acquire()
     try:
         data = _cache.get(name)
@@ -119,7 +138,7 @@ def load(name, merge_inherited=True):
                     else:
                         parent = '_'.join(parts[:-1])
                 data = load(parent).copy()
-            filename = os.path.join(_dirname, '%s.dat' % name)
+            filename = resolve_locale_filename(name)
             with open(filename, 'rb') as fileobj:
                 if name != 'root' and merge_inherited:
                     merge(data, pickle.load(fileobj))
@@ -164,7 +183,7 @@ def merge(dict1, dict2):
             dict1[key] = val1
 
 
-class Alias(object):
+class Alias:
     """Representation of an alias in the locale data.
 
     An alias is a value that refers to some other part of the locale data,

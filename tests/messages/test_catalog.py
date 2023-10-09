@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
 #
-# Copyright (C) 2007-2011 Edgewall Software, 2013-2019 the Babel team
+# Copyright (C) 2007-2011 Edgewall Software, 2013-2022 the Babel team
 # All rights reserved.
 #
 # This software is licensed as described in the file LICENSE, which
@@ -14,8 +13,8 @@
 import copy
 import datetime
 import unittest
+from io import StringIO
 
-from babel._compat import StringIO
 from babel.dates import format_datetime, UTC
 from babel.messages import catalog, pofile
 from babel.util import FixedOffsetTimezone
@@ -386,7 +385,7 @@ def test_catalog_mime_headers_set_locale():
         ('Last-Translator', 'John Doe <jd@example.com>'),
         ('Language', 'de_DE'),
         ('Language-Team', 'de_DE <de@example.com>'),
-        ('Plural-Forms', 'nplurals=2; plural=(n != 1)'),
+        ('Plural-Forms', 'nplurals=2; plural=(n != 1);'),
         ('MIME-Version', '1.0'),
         ('Content-Type', 'text/plain; charset=utf-8'),
         ('Content-Transfer-Encoding', '8bit'),
@@ -407,9 +406,9 @@ def test_catalog_plural_expr():
 
 def test_catalog_plural_forms():
     assert (catalog.Catalog(locale='en').plural_forms
-            == 'nplurals=2; plural=(n != 1)')
+            == 'nplurals=2; plural=(n != 1);')
     assert (catalog.Catalog(locale='pt_BR').plural_forms
-            == 'nplurals=2; plural=(n > 1)')
+            == 'nplurals=2; plural=(n > 1);')
 
 
 def test_catalog_setitem():

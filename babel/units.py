@@ -1,6 +1,3 @@
-# -- encoding: UTF-8 --
-
-from babel._compat import string_types
 from babel.core import Locale
 from babel.numbers import format_decimal, LC_NUMERIC
 
@@ -75,12 +72,14 @@ def format_unit(value, measurement_unit, length='long', format=None, locale=LC_N
     u'12 metri'
     >>> format_unit(15.5, 'length-mile', locale='fi_FI')
     u'15,5 mailia'
-    >>> format_unit(1200, 'pressure-inch-hg', locale='nb')
-    u'1\\xa0200 tommer kvikks\\xf8lv'
+    >>> format_unit(1200, 'pressure-millimeter-ofhg', locale='nb')
+    u'1\\xa0200 millimeter kvikks\\xf8lv'
+    >>> format_unit(270, 'ton', locale='en')
+    u'270 tons'
 
     Number formats may be overridden with the ``format`` parameter.
 
-    >>> from babel._compat import decimal
+    >>> import decimal
     >>> format_unit(decimal.Decimal("-42.774"), 'temperature-celsius', 'short', format='#.0', locale='fr')
     u'-42,8\\u202f\\xb0C'
 
@@ -117,7 +116,7 @@ def format_unit(value, measurement_unit, length='long', format=None, locale=LC_N
         raise UnknownUnitError(unit=measurement_unit, locale=locale)
     unit_patterns = locale._data["unit_patterns"][q_unit].get(length, {})
 
-    if isinstance(value, string_types):  # Assume the value is a preformatted singular.
+    if isinstance(value, str):  # Assume the value is a preformatted singular.
         formatted_value = value
         plural_form = "one"
     else:
@@ -243,7 +242,7 @@ def format_compound_unit(
 
     # ... failing that, construct one "by hand".
 
-    if isinstance(numerator_value, string_types):  # Numerator is preformatted
+    if isinstance(numerator_value, str):  # Numerator is preformatted
         formatted_numerator = numerator_value
     elif numerator_unit:  # Numerator has unit
         formatted_numerator = format_unit(
@@ -252,7 +251,7 @@ def format_compound_unit(
     else:  # Unitless numerator
         formatted_numerator = format_decimal(numerator_value, format=format, locale=locale)
 
-    if isinstance(denominator_value, string_types):  # Denominator is preformatted
+    if isinstance(denominator_value, str):  # Denominator is preformatted
         formatted_denominator = denominator_value
     elif denominator_unit:  # Denominator has unit
         if denominator_value == 1:  # support perUnitPatterns when the denominator is 1
@@ -271,6 +270,7 @@ def format_compound_unit(
     else:  # Bare denominator
         formatted_denominator = format_decimal(denominator_value, format=format, locale=locale)
 
-    per_pattern = locale._data["compound_unit_patterns"].get("per", {}).get(length, "{0}/{1}")
+    # TODO: this doesn't support "compound_variations" (or "prefix"), and will fall back to the "x/y" representation
+    per_pattern = locale._data["compound_unit_patterns"].get("per", {}).get(length, {}).get("compound", "{0}/{1}")
 
     return per_pattern.format(formatted_numerator, formatted_denominator)

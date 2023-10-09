@@ -1,3 +1,17 @@
+python-babel (2.10.3-1) unstable; urgency=medium
+
+  * Team upload.
+  * Apply multi-arch hints.
+    + python-babel-doc, python-babel-localedata: Add Multi-Arch: foreign.
+  * Use secure URI in Homepage field.
+  * Update standards version to 4.5.1, no changes needed.
+  * Prevent repack.
+  * New upstream version 2.10.3.
+  * Drop upstream patches.
+  * Mark the package with the appropriate Built-Using fields.
+
+ -- Bastian Germann <bage@debian.org>  Tue, 27 Sep 2022 19:44:32 +0200
+
 python-babel (2.8.0+dfsg.1-7) unstable; urgency=medium
 
   * CVE-2021-20095: Relative Path Traversal in Babel 2.9.0 allows an attacker

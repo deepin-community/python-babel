@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
 #
-# Copyright (C) 2007-2011 Edgewall Software, 2013-2019 the Babel team
+# Copyright (C) 2007-2011 Edgewall Software, 2013-2022 the Babel team
 # All rights reserved.
 #
 # This software is licensed as described in the file LICENSE, which
@@ -11,6 +10,7 @@
 # individuals. For the exact contribution history, see the revision
 # history and logs, available at http://babel.edgewall.org/log/.
 
+import decimal
 import unittest
 import pytest
 
@@ -20,7 +20,6 @@ from babel import localedata, numbers
 from babel.numbers import (
     list_currencies, validate_currency, UnknownCurrencyError, is_currency, normalize_currency,
     get_currency_precision, get_decimal_precision, get_currency_unit_pattern)
-from babel._compat import decimal
 
 
 class FormatDecimalTestCase(unittest.TestCase):
@@ -153,6 +152,36 @@ class FormatDecimalTestCase(unittest.TestCase):
         fmt = numbers.format_decimal(number, format="@@@", locale='en_US')
         self.assertEqual('0.000000700', fmt)
 
+    def test_group_separator(self):
+        self.assertEqual('29567.12', numbers.format_decimal(29567.12,
+                                                                     locale='en_US', group_separator=False))
+        self.assertEqual('29567,12', numbers.format_decimal(29567.12,
+                                                                     locale='fr_CA', group_separator=False))
+        self.assertEqual('29567,12', numbers.format_decimal(29567.12,
+                                                                     locale='pt_BR', group_separator=False))
+        self.assertEqual(u'$1099.98', numbers.format_currency(1099.98, 'USD',
+                                                             locale='en_US', group_separator=False))
+        self.assertEqual(u'101299,98\xa0€', numbers.format_currency(101299.98, 'EUR',
+                                                            locale='fr_CA', group_separator=False))
+        self.assertEqual('101299.98 euros', numbers.format_currency(101299.98, 'EUR',
+                                                            locale='en_US', group_separator=False, format_type='name'))
+        self.assertEqual(u'25123412\xa0%', numbers.format_percent(251234.1234, locale='sv_SE', group_separator=False))
+
+        self.assertEqual(u'29,567.12', numbers.format_decimal(29567.12,
+                                                            locale='en_US', group_separator=True))
+        self.assertEqual(u'29\xa0567,12', numbers.format_decimal(29567.12,
+                                                            locale='fr_CA', group_separator=True))
+        self.assertEqual(u'29.567,12', numbers.format_decimal(29567.12,
+                                                            locale='pt_BR', group_separator=True))
+        self.assertEqual(u'$1,099.98', numbers.format_currency(1099.98, 'USD',
+                                                              locale='en_US', group_separator=True))
+        self.assertEqual(u'101\xa0299,98\xa0\u20ac', numbers.format_currency(101299.98, 'EUR',
+                                                                    locale='fr_CA', group_separator=True))
+        self.assertEqual(u'101,299.98 euros', numbers.format_currency(101299.98, 'EUR',
+                                                                    locale='en_US', group_separator=True,
+                                                                    format_type='name'))
+        self.assertEqual(u'25\xa0123\xa0412\xa0%', numbers.format_percent(251234.1234, locale='sv_SE', group_separator=True))
+
 
 class NumberParsingTestCase(unittest.TestCase):
 
@@ -208,7 +237,7 @@ def test_list_currencies():
 
     assert list_currencies(locale='pa_Arab') == {'PKR', 'INR', 'EUR'}
 
-    assert len(list_currencies()) == 303
+    assert len(list_currencies()) == 305
 
 
 def test_validate_currency():
@@ -316,12 +345,9 @@ def test_decimal_precision():
     assert get_decimal_precision(decimal.Decimal('10000')) == 0
 
 
-def test_format_number():
-    assert numbers.format_number(1099, locale='en_US') == u'1,099'
-    assert numbers.format_number(1099, locale='de_DE') == u'1.099'
-
-
 def test_format_decimal():
+    assert numbers.format_decimal(1099, locale='en_US') == u'1,099'
+    assert numbers.format_decimal(1099, locale='de_DE') == u'1.099'
     assert numbers.format_decimal(1.2345, locale='en_US') == u'1.234'
     assert numbers.format_decimal(1.2346, locale='en_US') == u'1.235'
     assert numbers.format_decimal(-1.2346, locale='en_US') == u'-1.235'
@@ -386,6 +412,12 @@ def test_format_currency():
     assert (numbers.format_currency(1099.98, 'USD', format=None,
                                     locale='en_US')
             == u'$1,099.98')
+    assert (numbers.format_currency(1, 'USD', locale='es_AR')
+            == u'US$\xa01,00')          # one
+    assert (numbers.format_currency(1000000, 'USD', locale='es_AR')
+            == u'US$\xa01.000.000,00')  # many
+    assert (numbers.format_currency(0, 'USD', locale='es_AR')
+            == u'US$\xa00,00')          # other
 
 
 def test_format_currency_format_type():

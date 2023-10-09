@@ -13,9 +13,10 @@ except ImportError:
     from urllib import urlretrieve
 
 
-URL = 'http://unicode.org/Public/cldr/36/core.zip'
-FILENAME = 'cldr-core-36.zip'
-FILESUM = '07279e56c1f4266d140b907ef3ec379dce0a99542303a9628562ac5fe460ba43'
+URL = 'http://unicode.org/Public/cldr/41/cldr-common-41.0.zip'
+FILENAME = 'cldr-common-41.0.zip'
+# Via https://unicode.org/Public/cldr/41/hashes/SHASUM512
+FILESUM = 'c64f3338e292962817b043dd11e9c47f533c9b70d432f83e80654e20f4937c72b37e66a60485df43f734b1ff94ebf0452547a063076917889303c9653b4d6ce5'
 BLKSIZE = 131072
 
 
@@ -53,7 +54,7 @@ def is_good_file(filename):
     if not os.path.isfile(filename):
         log('Local copy \'%s\' not found', filename)
         return False
-    h = hashlib.sha256()
+    h = hashlib.sha512()
     with open(filename, 'rb') as f:
         while 1:
             blk = f.read(BLKSIZE)
@@ -75,12 +76,13 @@ def main():
     cldr_path = os.path.join(repo, 'cldr', os.path.splitext(FILENAME)[0])
     zip_path = os.path.join(cldr_dl_path, FILENAME)
     changed = False
+    show_progress = (False if os.environ.get("BABEL_CLDR_NO_DOWNLOAD_PROGRESS") else sys.stdout.isatty())
 
     while not is_good_file(zip_path):
-        log('Downloading \'%s\'', FILENAME)
+        log("Downloading '%s' from %s", FILENAME, URL)
         if os.path.isfile(zip_path):
             os.remove(zip_path)
-        urlretrieve(URL, zip_path, reporthook)
+        urlretrieve(URL, zip_path, (reporthook if show_progress else None))
         changed = True
         print()
     common_path = os.path.join(cldr_path, 'common')
