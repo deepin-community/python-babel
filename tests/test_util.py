@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
 #
-# Copyright (C) 2007-2011 Edgewall Software, 2013-2019 the Babel team
+# Copyright (C) 2007-2011 Edgewall Software, 2013-2022 the Babel team
 # All rights reserved.
 #
 # This software is licensed as described in the file LICENSE, which
@@ -11,14 +10,21 @@
 # individuals. For the exact contribution history, see the revision
 # history and logs, available at http://babel.edgewall.org/log/.
 
+import __future__
 import unittest
+from io import BytesIO
 
 import pytest
 
 from babel import util
-from babel._compat import BytesIO
 from babel.util import parse_future_flags
 
+
+class _FF:
+    division         = __future__.division.compiler_flag
+    print_function   = __future__.print_function.compiler_flag
+    with_statement   = __future__.with_statement.compiler_flag
+    unicode_literals = __future__.unicode_literals.compiler_flag
 
 def test_distinct():
     assert list(util.distinct([1, 2, 1, 3, 4, 4])) == [1, 2, 3, 4]
@@ -70,25 +76,25 @@ def test_parse_encoding_non_ascii():
 from __future__ import print_function,
     division, with_statement,
     unicode_literals
-''', 0x10000 | 0x2000 | 0x8000 | 0x20000),
+''', _FF.print_function | _FF.division | _FF.with_statement | _FF.unicode_literals),
     ('''
 from __future__ import print_function, division
 print('hello')
-''', 0x10000 | 0x2000),
+''', _FF.print_function | _FF.division),
     ('''
 from __future__ import print_function, division, unknown,,,,,
 print 'hello'
-''', 0x10000 | 0x2000),
+''', _FF.print_function | _FF.division),
     ('''
 from __future__ import (
     print_function,
     division)
-''', 0x10000 | 0x2000),
+''', _FF.print_function | _FF.division),
     ('''
 from __future__ import \\
     print_function, \\
     division
-''', 0x10000 | 0x2000),
+''', _FF.print_function | _FF.division),
 ])
 def test_parse_future(source, result):
     fp = BytesIO(source.encode('latin-1'))

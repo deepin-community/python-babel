@@ -7,8 +7,6 @@ Subject: remove google fonts
  docs/_themes/babel/static/babel.css_t | 3 +--
  2 files changed, 1 insertion(+), 4 deletions(-)
 
-diff --git a/docs/_themes/babel/layout.html b/docs/_themes/babel/layout.html
-index 1fd054e..5caa4e2 100644
 --- a/docs/_themes/babel/layout.html
 +++ b/docs/_themes/babel/layout.html
 @@ -6,8 +6,6 @@
@@ -20,8 +18,6 @@ index 1fd054e..5caa4e2 100644
  {% endblock %}
  {%- block relbar2 %}{% endblock %}
  {% block header %}
-diff --git a/docs/_themes/babel/static/babel.css_t b/docs/_themes/babel/static/babel.css_t
-index bd1a1cd..75472c1 100644
 --- a/docs/_themes/babel/static/babel.css_t
 +++ b/docs/_themes/babel/static/babel.css_t
 @@ -9,13 +9,12 @@

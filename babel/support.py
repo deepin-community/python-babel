@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
     babel.support
     ~~~~~~~~~~~~~
@@ -8,7 +7,7 @@
 
     .. note: the code in this module is not used by Babel itself
 
-    :copyright: (c) 2013-2019 by the Babel Team.
+    :copyright: (c) 2013-2022 by the Babel Team.
     :license: BSD, see LICENSE for more details.
 """
 
@@ -18,12 +17,11 @@ import locale
 from babel.core import Locale
 from babel.dates import format_date, format_datetime, format_time, \
     format_timedelta
-from babel.numbers import format_number, format_decimal, format_currency, \
+from babel.numbers import format_decimal, format_currency, \
     format_percent, format_scientific
-from babel._compat import PY2, text_type, text_to_native
 
 
-class Format(object):
+class Format:
     """Wrapper class providing the various date and number formatting functions
     bound to a specific locale and time-zone.
 
@@ -79,7 +77,7 @@ class Format(object):
         return format_time(time, format, tzinfo=self.tzinfo, locale=self.locale)
 
     def timedelta(self, delta, granularity='second', threshold=.85,
-                  format='medium', add_direction=False):
+                  format='long', add_direction=False):
         """Return a time delta according to the rules of the given locale.
 
         >>> from datetime import timedelta
@@ -99,7 +97,7 @@ class Format(object):
         >>> fmt.number(1099)
         u'1,099'
         """
-        return format_number(number, locale=self.locale)
+        return format_decimal(number, locale=self.locale)
 
     def decimal(self, number, format=None):
         """Return a decimal number formatted for the locale.
@@ -130,7 +128,7 @@ class Format(object):
         return format_scientific(number, locale=self.locale)
 
 
-class LazyProxy(object):
+class LazyProxy:
     """Class for proxy objects that delegate to a specified function to evaluate
     the actual object.
 
@@ -165,7 +163,7 @@ class LazyProxy(object):
     Hello, universe!
     Hello, world!
     """
-    __slots__ = ['_func', '_args', '_kwargs', '_value', '_is_cache_enabled']
+    __slots__ = ['_func', '_args', '_kwargs', '_value', '_is_cache_enabled', '_attribute_error']
 
     def __init__(self, func, *args, **kwargs):
         is_cache_enabled = kwargs.pop('enable_cache', True)
@@ -175,11 +173,17 @@ class LazyProxy(object):
         object.__setattr__(self, '_kwargs', kwargs)
         object.__setattr__(self, '_is_cache_enabled', is_cache_enabled)
         object.__setattr__(self, '_value', None)
+        object.__setattr__(self, '_attribute_error', None)
 
     @property
     def value(self):
         if self._value is None:
-            value = self._func(*self._args, **self._kwargs)
+            try:
+                value = self._func(*self._args, **self._kwargs)
+            except AttributeError as error:
+                object.__setattr__(self, '_attribute_error', error)
+                raise
+
             if not self._is_cache_enabled:
                 return value
             object.__setattr__(self, '_value', value)
@@ -249,6 +253,8 @@ class LazyProxy(object):
         delattr(self.value, name)
 
     def __getattr__(self, name):
+        if self._attribute_error is not None:
+            raise self._attribute_error
         return getattr(self.value, name)
 
     def __setattr__(self, name, value):
@@ -281,7 +287,7 @@ class LazyProxy(object):
         )
 
 
-class NullTranslations(gettext.NullTranslations, object):
+class NullTranslations(gettext.NullTranslations):
 
     DEFAULT_DOMAIN = None
 
@@ -297,7 +303,7 @@ class NullTranslations(gettext.NullTranslations, object):
         # some *gettext methods (including '.gettext()') rely on the attributes.
         self._catalog = {}
         self.plural = lambda n: int(n != 1)
-        super(NullTranslations, self).__init__(fp=fp)
+        super().__init__(fp=fp)
         self.files = list(filter(None, [getattr(fp, 'name', None)]))
         self.domain = self.DEFAULT_DOMAIN
         self._domains = {}
@@ -312,6 +318,9 @@ class NullTranslations(gettext.NullTranslations, object):
         """Like ``lgettext()``, but look the message up in the specified
         domain.
         """
+        import warnings
+        warnings.warn('ldgettext() is deprecated, use dgettext() instead',
+                      DeprecationWarning, 2)
         return self._domains.get(domain, self).lgettext(message)
 
     def udgettext(self, domain, message):
@@ -332,6 +341,9 @@ class NullTranslations(gettext.NullTranslations, object):
         """Like ``lngettext()``, but look the message up in the specified
         domain.
         """
+        import warnings
+        warnings.warn('ldngettext() is deprecated, use dngettext() instead',
+                      DeprecationWarning, 2)
         return self._domains.get(domain, self).lngettext(singular, plural, num)
 
     def udngettext(self, domain, singular, plural, num):
@@ -364,11 +376,6 @@ class NullTranslations(gettext.NullTranslations, object):
             if self._fallback:
                 return self._fallback.pgettext(context, message)
             return message
-        # Encode the Unicode tmsg back to an 8-bit string, if possible
-        if self._output_charset:
-            return text_to_native(tmsg, self._output_charset)
-        elif self._charset:
-            return text_to_native(tmsg, self._charset)
         return tmsg
 
     def lpgettext(self, context, message):
@@ -376,16 +383,12 @@ class NullTranslations(gettext.NullTranslations, object):
         preferred system encoding, if no other encoding was explicitly set with
         ``bind_textdomain_codeset()``.
         """
-        ctxt_msg_id = self.CONTEXT_ENCODING % (context, message)
-        missing = object()
-        tmsg = self._catalog.get(ctxt_msg_id, missing)
-        if tmsg is missing:
-            if self._fallback:
-                return self._fallback.lpgettext(context, message)
-            return message
-        if self._output_charset:
-            return tmsg.encode(self._output_charset)
-        return tmsg.encode(locale.getpreferredencoding())
+        import warnings
+        warnings.warn('lpgettext() is deprecated, use pgettext() instead',
+                      DeprecationWarning, 2)
+        tmsg = self.pgettext(context, message)
+        encoding = getattr(self, "_output_charset", None) or locale.getpreferredencoding()
+        return tmsg.encode(encoding)
 
     def npgettext(self, context, singular, plural, num):
         """Do a plural-forms lookup of a message id.  `singular` is used as the
@@ -401,10 +404,6 @@ class NullTranslations(gettext.NullTranslations, object):
         ctxt_msg_id = self.CONTEXT_ENCODING % (context, singular)
         try:
             tmsg = self._catalog[(ctxt_msg_id, self.plural(num))]
-            if self._output_charset:
-                return text_to_native(tmsg, self._output_charset)
-            elif self._charset:
-                return text_to_native(tmsg, self._charset)
             return tmsg
         except KeyError:
             if self._fallback:
@@ -419,12 +418,14 @@ class NullTranslations(gettext.NullTranslations, object):
         preferred system encoding, if no other encoding was explicitly set with
         ``bind_textdomain_codeset()``.
         """
+        import warnings
+        warnings.warn('lnpgettext() is deprecated, use npgettext() instead',
+                      DeprecationWarning, 2)
         ctxt_msg_id = self.CONTEXT_ENCODING % (context, singular)
         try:
             tmsg = self._catalog[(ctxt_msg_id, self.plural(num))]
-            if self._output_charset:
-                return tmsg.encode(self._output_charset)
-            return tmsg.encode(locale.getpreferredencoding())
+            encoding = getattr(self, "_output_charset", None) or locale.getpreferredencoding()
+            return tmsg.encode(encoding)
         except KeyError:
             if self._fallback:
                 return self._fallback.lnpgettext(context, singular, plural, num)
@@ -446,7 +447,7 @@ class NullTranslations(gettext.NullTranslations, object):
         if tmsg is missing:
             if self._fallback:
                 return self._fallback.upgettext(context, message)
-            return text_type(message)
+            return str(message)
         return tmsg
 
     def unpgettext(self, context, singular, plural, num):
@@ -467,9 +468,9 @@ class NullTranslations(gettext.NullTranslations, object):
             if self._fallback:
                 return self._fallback.unpgettext(context, singular, plural, num)
             if num == 1:
-                tmsg = text_type(singular)
+                tmsg = str(singular)
             else:
-                tmsg = text_type(plural)
+                tmsg = str(plural)
         return tmsg
 
     def dpgettext(self, domain, context, message):
@@ -517,9 +518,8 @@ class NullTranslations(gettext.NullTranslations, object):
         return self._domains.get(domain, self).lnpgettext(context, singular,
                                                           plural, num)
 
-    if not PY2:
-        ugettext = gettext.NullTranslations.gettext
-        ungettext = gettext.NullTranslations.ngettext
+    ugettext = gettext.NullTranslations.gettext
+    ungettext = gettext.NullTranslations.ngettext
 
 
 class Translations(NullTranslations, gettext.GNUTranslations):
@@ -533,12 +533,11 @@ class Translations(NullTranslations, gettext.GNUTranslations):
         :param fp: the file-like object the translation should be read from
         :param domain: the message domain (default: 'messages')
         """
-        super(Translations, self).__init__(fp=fp)
+        super().__init__(fp=fp)
         self.domain = domain or self.DEFAULT_DOMAIN
 
-    if not PY2:
-        ugettext = gettext.GNUTranslations.gettext
-        ungettext = gettext.GNUTranslations.ngettext
+    ugettext = gettext.GNUTranslations.gettext
+    ungettext = gettext.GNUTranslations.ngettext
 
     @classmethod
     def load(cls, dirname=None, locales=None, domain=None):

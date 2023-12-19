@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
 #
-# Copyright (C) 2007-2011 Edgewall Software, 2013-2019 the Babel team
+# Copyright (C) 2007-2011 Edgewall Software, 2013-2022 the Babel team
 # All rights reserved.
 #
 # This software is licensed as described in the file LICENSE, which
@@ -13,12 +12,12 @@
 
 from datetime import datetime
 import unittest
+from io import BytesIO, StringIO
 
 from babel.core import Locale
 from babel.messages.catalog import Catalog, Message
 from babel.messages import pofile
 from babel.util import FixedOffsetTimezone
-from babel._compat import StringIO, BytesIO
 
 class ReadPoTestCase(unittest.TestCase):
 
@@ -58,7 +57,7 @@ msgstr ""
 "PO-Revision-Date: 2007-09-27 21:42-0700\\n"
 "Last-Translator: John <cleese@bavaria.de>\\n"
 "Language-Team: German Lang <de@babel.org>\\n"
-"Plural-Forms: nplurals=2; plural=(n != 1)\\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\\n"
 "MIME-Version: 1.0\\n"
 "Content-Type: text/plain; charset=iso-8859-1\\n"
 "Content-Transfer-Encoding: 8bit\\n"
@@ -127,7 +126,7 @@ msgstr ""
 "Last-Translator: John <cleese@bavaria.de>\n"
 "Language: de\n"
 "Language-Team: German Lang <de@babel.org>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=iso-8859-2\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -392,7 +391,7 @@ msgstr[1] "Vohs [text]"''')
         buf = StringIO('''\
 msgid ""
 msgstr ""
-"Plural-Forms: nplurals=3; plural=(n < 2) ? n : 2\n"
+"Plural-Forms: nplurals=3; plural=(n < 2) ? n : 2;\n"
 
 msgid "foo"
 msgid_plural "foos"
@@ -412,7 +411,7 @@ msgstr[1] "Vohs [text]"
         buf = StringIO('''\
 msgid ""
 msgstr ""
-"Plural-Forms: nplurals=3; plural=(n < 2) ? n : 2\n"
+"Plural-Forms: nplurals=3; plural=(n < 2) ? n : 2;\n"
 
 msgid "foo"
 msgid_plural "foos"
@@ -480,7 +479,7 @@ msgstr[2] "Vohs [text]"
     def test_invalid_pofile_with_abort_flag(self):
         parser = pofile.PoFileParser(None, abort_invalid=True)
         lineno = 10
-        line = 'Algo esta mal'
+        line = u'Algo esta mal'
         msg = 'invalid file'
         with self.assertRaises(pofile.PoFileError) as e:
             parser._invalid_pofile(line, lineno, msg)
@@ -827,6 +826,7 @@ msgstr ""''', buf.getvalue().strip())
     def test_no_include_lineno(self):
         catalog = Catalog()
         catalog.add(u'foo', locations=[('main.py', 1)])
+        catalog.add(u'foo', locations=[('main.py', 2)])
         catalog.add(u'foo', locations=[('utils.py', 3)])
         buf = BytesIO()
         pofile.write_po(buf, catalog, omit_header=True, include_lineno=False)

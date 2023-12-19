@@ -16,9 +16,10 @@ Build-Depends:
  python3-tz,
 Build-Depends-Indep:
  python3-freezegun,
-Standards-Version: 4.5.0
+ unicode-cldr-core,
+Standards-Version: 4.6.2
 Rules-Requires-Root: no
-Homepage: http://babel.pocoo.org/
+Homepage: https://babel.pocoo.org/
 Vcs-Git: https://salsa.debian.org/python-team/packages/python-babel.git
 Vcs-Browser: https://salsa.debian.org/python-team/packages/python-babel
 
@@ -28,6 +29,9 @@ Section: doc
 Depends:
  ${misc:Depends},
  ${sphinxdoc:Depends},
+Built-Using:
+ ${sphinxdoc:Built-Using},
+Multi-Arch: foreign
 Description: tools for internationalizing Python applications - documentation
  Babel is composed of two major parts. First tools to build and work with
  gettext message catalogs. Second a Python interface to the CLDR (Common
@@ -40,6 +44,9 @@ Package: python-babel-localedata
 Architecture: all
 Depends:
  ${misc:Depends},
+Built-Using:
+ ${Built-Using},
+Multi-Arch: foreign
 Description: tools for internationalizing Python applications - locale data files
  Babel is composed of two major parts. First tools to build and work with
  gettext message catalogs. Second a Python interface to the CLDR (Common
@@ -58,8 +65,8 @@ Depends:
  python3-pkg-resources,
  ${misc:Depends},
  ${python3:Depends},
-Recommends:
- ${python3:Recommends},
+Built-Using:
+ ${Built-Using},
 Description: tools for internationalizing Python applications - Python 3.x
  Babel is composed of two major parts. First tools to build and work with
  gettext message catalogs. Second a Python interface to the CLDR (Common

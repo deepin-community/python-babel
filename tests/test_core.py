@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
 #
-# Copyright (C) 2007-2011 Edgewall Software, 2013-2019 the Babel team
+# Copyright (C) 2007-2011 Edgewall Software, 2013-2022 the Babel team
 # All rights reserved.
 #
 # This software is licensed as described in the file LICENSE, which
@@ -302,8 +301,6 @@ def test_parse_locale():
     'babel/locale-data/es_419.dat',
 ])
 def test_compatible_classes_in_global_and_localedata(filename):
-    # Use pickle module rather than cPickle since cPickle.Unpickler is a method
-    # on Python 2
     import pickle
 
     class Unpickler(pickle.Unpickler):
@@ -327,3 +324,9 @@ def test_issue_601_no_language_name_but_has_variant():
     # part of a language name.
 
     assert Locale.parse('fi_FI').get_display_name('kw_GB') == None
+
+
+def test_issue_814():
+    loc = Locale.parse('ca_ES_valencia')
+    assert loc.variant == "VALENCIA"
+    assert loc.get_display_name() == 'català (Espanya, valencià)'
