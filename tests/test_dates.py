@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
 #
-# Copyright (C) 2007-2011 Edgewall Software, 2013-2019 the Babel team
+# Copyright (C) 2007-2011 Edgewall Software, 2013-2022 the Babel team
 # All rights reserved.
 #
 # This software is licensed as described in the file LICENSE, which
@@ -15,6 +14,7 @@ import calendar
 from datetime import date, datetime, time, timedelta
 import unittest
 
+import freezegun
 import pytest
 import pytz
 from pytz import timezone
@@ -22,6 +22,23 @@ from pytz import timezone
 from babel import dates, Locale
 from babel.dates import NO_INHERITANCE_MARKER
 from babel.util import FixedOffsetTimezone
+
+
+@pytest.fixture(params=["pytz.timezone", "zoneinfo.ZoneInfo"])
+def timezone_getter(request):
+    if request.param == "pytz.timezone":
+        return timezone
+    elif request.param == "zoneinfo.ZoneInfo":
+        try:
+            import zoneinfo
+        except ImportError:
+            try:
+                from backports import zoneinfo
+            except ImportError:
+                pytest.skip("zoneinfo not available")
+        return zoneinfo.ZoneInfo
+    else:
+        raise NotImplementedError
 
 
 class DateTimeFormatTestCase(unittest.TestCase):
@@ -530,14 +547,14 @@ def test_get_period_names():
 def test_get_day_names():
     assert dates.get_day_names('wide', locale='en_US')[1] == u'Tuesday'
     assert dates.get_day_names('short', locale='en_US')[1] == u'Tu'
-    assert dates.get_day_names('abbreviated', locale='es')[1] == u'mar.'
+    assert dates.get_day_names('abbreviated', locale='es')[1] == u'mar'
     de = dates.get_day_names('narrow', context='stand-alone', locale='de_DE')
     assert de[1] == u'D'
 
 
 def test_get_month_names():
     assert dates.get_month_names('wide', locale='en_US')[1] == u'January'
-    assert dates.get_month_names('abbreviated', locale='es')[1] == u'ene.'
+    assert dates.get_month_names('abbreviated', locale='es')[1] == u'ene'
     de = dates.get_month_names('narrow', context='stand-alone', locale='de_DE')
     assert de[1] == u'J'
 
@@ -583,8 +600,8 @@ def test_get_timezone_gmt():
     assert dates.get_timezone_gmt(dt, 'long', locale='fr_FR') == u'UTC-07:00'
 
 
-def test_get_timezone_location():
-    tz = timezone('America/St_Johns')
+def test_get_timezone_location(timezone_getter):
+    tz = timezone_getter('America/St_Johns')
     assert (dates.get_timezone_location(tz, locale='de_DE') ==
             u"Kanada (St. John\u2019s) Zeit")
     assert (dates.get_timezone_location(tz, locale='en') ==
@@ -592,51 +609,83 @@ def test_get_timezone_location():
     assert (dates.get_timezone_location(tz, locale='en', return_city=True) ==
             u'St. John’s')
 
-    tz = timezone('America/Mexico_City')
+    tz = timezone_getter('America/Mexico_City')
     assert (dates.get_timezone_location(tz, locale='de_DE') ==
             u'Mexiko (Mexiko-Stadt) Zeit')
 
-    tz = timezone('Europe/Berlin')
+    tz = timezone_getter('Europe/Berlin')
     assert (dates.get_timezone_location(tz, locale='de_DE') ==
             u'Deutschland (Berlin) Zeit')
 
 
-def test_get_timezone_name():
-    dt = time(15, 30, tzinfo=timezone('America/Los_Angeles'))
-    assert (dates.get_timezone_name(dt, locale='en_US') ==
-            u'Pacific Standard Time')
-    assert (dates.get_timezone_name(dt, locale='en_US', return_zone=True) ==
-            u'America/Los_Angeles')
-    assert dates.get_timezone_name(dt, width='short', locale='en_US') == u'PST'
+@pytest.mark.parametrize(
+    "tzname, params, expected",
+    [
+        ("America/Los_Angeles", {"locale": "en_US"}, u"Pacific Time"),
+        ("America/Los_Angeles", {"width": "short", "locale": "en_US"}, u"PT"),
+        ("Europe/Berlin", {"locale": "de_DE"}, u"Mitteleurop\xe4ische Zeit"),
+        ("Europe/Berlin", {"locale": "pt_BR"}, u"Hor\xe1rio da Europa Central"),
+        ("America/St_Johns", {"locale": "de_DE"}, u"Neufundland-Zeit"),
+        (
+            "America/Los_Angeles",
+            {"locale": "en", "width": "short", "zone_variant": "generic"},
+            u"PT",
+        ),
+        (
+            "America/Los_Angeles",
+            {"locale": "en", "width": "short", "zone_variant": "standard"},
+            u"PST",
+        ),
+        (
+            "America/Los_Angeles",
+            {"locale": "en", "width": "short", "zone_variant": "daylight"},
+            u"PDT",
+        ),
+        (
+            "America/Los_Angeles",
+            {"locale": "en", "width": "long", "zone_variant": "generic"},
+            u"Pacific Time",
+        ),
+        (
+            "America/Los_Angeles",
+            {"locale": "en", "width": "long", "zone_variant": "standard"},
+            u"Pacific Standard Time",
+        ),
+        (
+            "America/Los_Angeles",
+            {"locale": "en", "width": "long", "zone_variant": "daylight"},
+            u"Pacific Daylight Time",
+        ),
+        ("Europe/Berlin", {"locale": "en_US"}, u"Central European Time"),
+    ],
+)
+def test_get_timezone_name_tzinfo(timezone_getter, tzname, params, expected):
+    tz = timezone_getter(tzname)
+    assert dates.get_timezone_name(tz, **params) == expected
 
-    tz = timezone('America/Los_Angeles')
-    assert dates.get_timezone_name(tz, locale='en_US') == u'Pacific Time'
-    assert dates.get_timezone_name(tz, 'short', locale='en_US') == u'PT'
 
-    tz = timezone('Europe/Berlin')
-    assert (dates.get_timezone_name(tz, locale='de_DE') ==
-            u'Mitteleurop\xe4ische Zeit')
-    assert (dates.get_timezone_name(tz, locale='pt_BR') ==
-            u'Hor\xe1rio da Europa Central')
+@pytest.mark.parametrize("timezone_getter", ["pytz.timezone"], indirect=True)
+@pytest.mark.parametrize(
+    "tzname, params, expected",
+    [
+        ("America/Los_Angeles", {"locale": "en_US"}, u"Pacific Standard Time"),
+        (
+            "America/Los_Angeles",
+            {"locale": "en_US", "return_zone": True},
+            u"America/Los_Angeles",
+        ),
+        ("America/Los_Angeles", {"width": "short", "locale": "en_US"}, u"PST"),
+    ],
+)
+def test_get_timezone_name_time_pytz(timezone_getter, tzname, params, expected):
+    """pytz (by design) can't determine if the time is in DST or not,
+    so it will always return Standard time"""
+    dt = time(15, 30, tzinfo=timezone_getter(tzname))
+    assert dates.get_timezone_name(dt, **params) == expected
 
-    tz = timezone('America/St_Johns')
-    assert dates.get_timezone_name(tz, locale='de_DE') == u'Neufundland-Zeit'
 
-    tz = timezone('America/Los_Angeles')
-    assert dates.get_timezone_name(tz, locale='en', width='short',
-                                   zone_variant='generic') == u'PT'
-    assert dates.get_timezone_name(tz, locale='en', width='short',
-                                   zone_variant='standard') == u'PST'
-    assert dates.get_timezone_name(tz, locale='en', width='short',
-                                   zone_variant='daylight') == u'PDT'
-    assert dates.get_timezone_name(tz, locale='en', width='long',
-                                   zone_variant='generic') == u'Pacific Time'
-    assert dates.get_timezone_name(tz, locale='en', width='long',
-                                   zone_variant='standard') == u'Pacific Standard Time'
-    assert dates.get_timezone_name(tz, locale='en', width='long',
-                                   zone_variant='daylight') == u'Pacific Daylight Time'
-
-    localnow = datetime.utcnow().replace(tzinfo=timezone('UTC')).astimezone(dates.LOCALTZ)
+def test_get_timezone_name_misc(timezone_getter):
+    localnow = datetime.utcnow().replace(tzinfo=timezone_getter('UTC')).astimezone(dates.LOCALTZ)
     assert (dates.get_timezone_name(None, locale='en_US') ==
             dates.get_timezone_name(localnow, locale='en_US'))
 
@@ -725,10 +774,37 @@ def test_format_timedelta():
 def test_parse_date():
     assert dates.parse_date('4/1/04', locale='en_US') == date(2004, 4, 1)
     assert dates.parse_date('01.04.2004', locale='de_DE') == date(2004, 4, 1)
+    assert dates.parse_date('2004-04-01', locale='sv_SE', format='short') == date(2004, 4, 1)
 
 
-def test_parse_time():
-    assert dates.parse_time('15:30:00', locale='en_US') == time(15, 30)
+@pytest.mark.parametrize('input, expected', [
+    # base case, fully qualified time
+    ('15:30:00', time(15, 30)),
+    # test digits
+    ('15:30', time(15, 30)),
+    ('3:30', time(3, 30)),
+    ('00:30', time(0, 30)),
+    # test am parsing
+    ('03:30 am', time(3, 30)),
+    ('3:30:21 am', time(3, 30, 21)),
+    ('3:30 am', time(3, 30)),
+    # test pm parsing
+    ('03:30 pm', time(15, 30)),
+    ('03:30 pM', time(15, 30)),
+    ('03:30 Pm', time(15, 30)),
+    ('03:30 PM', time(15, 30)),
+    # test hour-only parsing
+    ('4 pm', time(16, 0)),
+])
+def test_parse_time(input, expected):
+    assert dates.parse_time(input, locale='en_US') == expected
+
+
+@pytest.mark.parametrize('case', ['', 'a', 'aaa'])
+@pytest.mark.parametrize('func', [dates.parse_date, dates.parse_time])
+def test_parse_errors(case, func):
+    with pytest.raises(dates.ParseError):
+        func(case, locale='en_US')
 
 
 def test_datetime_format_get_week_number():
@@ -757,22 +833,13 @@ def test_lithuanian_long_format():
 
 def test_zh_TW_format():
     # Refs GitHub issue #378
-    assert dates.format_time(datetime(2016, 4, 8, 12, 34, 56), locale='zh_TW') == u'\u4e0b\u534812:34:56'
+    assert dates.format_time(datetime(2016, 4, 8, 12, 34, 56), locale='zh_TW') == u'中午12:34:56'
 
 
-def test_format_current_moment(monkeypatch):
-    import datetime as datetime_module
+def test_format_current_moment():
     frozen_instant = datetime.utcnow()
-
-    class frozen_datetime(datetime):
-
-        @classmethod
-        def utcnow(cls):
-            return frozen_instant
-
-    # Freeze time! Well, some of it anyway.
-    monkeypatch.setattr(datetime_module, "datetime", frozen_datetime)
-    assert dates.format_datetime(locale="en_US") == dates.format_datetime(frozen_instant, locale="en_US")
+    with freezegun.freeze_time(time_to_freeze=frozen_instant):
+        assert dates.format_datetime(locale="en_US") == dates.format_datetime(frozen_instant, locale="en_US")
 
 
 @pytest.mark.all_locales
@@ -805,3 +872,7 @@ def test_en_gb_first_weekday():
     assert Locale.parse('en').first_week_day == 0  # Monday in general
     assert Locale.parse('en_US').first_week_day == 6  # Sunday in the US
     assert Locale.parse('en_GB').first_week_day == 0  # Monday in the UK
+
+
+def test_issue_798():
+    assert dates.format_timedelta(timedelta(), format='narrow', locale='es_US') == '0s'

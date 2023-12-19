@@ -7,11 +7,9 @@ Subject: Revert upstream issue #621
  tests/test_dates.py |  9 ---------
  2 files changed, 3 insertions(+), 20 deletions(-)
 
-diff --git a/babel/dates.py b/babel/dates.py
-index f1bd66f..c57ecc0 100644
 --- a/babel/dates.py
 +++ b/babel/dates.py
-@@ -1319,7 +1319,9 @@ class DateTimeFormat(object):
+@@ -1383,7 +1383,9 @@
      def format_year(self, char, num):
          value = self.value.year
          if char.isupper():
@@ -22,7 +20,7 @@ index f1bd66f..c57ecc0 100644
          year = self.format(value, num)
          if num == 2:
              year = year[-2:]
-@@ -1507,16 +1509,6 @@ class DateTimeFormat(object):
+@@ -1605,16 +1607,6 @@
          if 7 - first_day >= self.locale.min_week_days:
              week_number += 1
  
@@ -39,11 +37,9 @@ index f1bd66f..c57ecc0 100644
          return week_number
  
  
-diff --git a/tests/test_dates.py b/tests/test_dates.py
-index 5be0d16..eb616db 100644
 --- a/tests/test_dates.py
 +++ b/tests/test_dates.py
-@@ -79,15 +79,6 @@ class DateTimeFormatTestCase(unittest.TestCase):
+@@ -96,15 +96,6 @@
          fmt = dates.DateTimeFormat(d, locale='en_US')
          self.assertEqual('53', fmt['w'])
  
