@@ -1,8 +1,14 @@
-python-babel (2.10.3-3deepin1) unstable; urgency=medium
+python-babel (2.14.0-1) unstable; urgency=medium
 
-  * add 006-fix-test-format-time.patch.
+  * Team Upload.
+  * New upstream version 2.14.0
+  * Drop merged patches
+  * Refresh existing patches
+  * Add upstream patch to adjust data/tests in accordance
+    with cldr 44 (Closes: #1060931)
+  * Drop myself from uploaders
 
- -- LiChengGang <lichenggang@uniontech.com>  Tue, 19 Dec 2023 16:54:40 +0800
+ -- Nilesh Patra <nilesh@iki.fi>  Tue, 16 Apr 2024 18:14:49 +0530
 
 python-babel (2.10.3-3) unstable; urgency=medium
 

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2011 Edgewall Software, 2013-2022 the Babel team
+# Copyright (C) 2007-2011 Edgewall Software, 2013-2023 the Babel team
 # All rights reserved.
 #
 # This software is licensed as described in the file LICENSE, which
@@ -11,9 +11,10 @@
 # history and logs, available at http://babel.edgewall.org/log/.
 import decimal
 import unittest
+
 import pytest
 
-from babel import plural, localedata
+from babel import localedata, plural
 
 EPSILON = decimal.Decimal("0.0001")
 
@@ -141,13 +142,43 @@ def test_locales_with_no_plural_rules_have_default():
 
 
 WELL_FORMED_TOKEN_TESTS = (
-    ('', []),
-    ('n = 1', [('value', '1'), ('symbol', '='), ('word', 'n'), ]),
-    ('n = 1 @integer 1', [('value', '1'), ('symbol', '='), ('word', 'n'), ]),
-    ('n is 1', [('value', '1'), ('word', 'is'), ('word', 'n'), ]),
-    ('n % 100 = 3..10', [('value', '10'), ('ellipsis', '..'), ('value', '3'),
-                         ('symbol', '='), ('value', '100'), ('symbol', '%'),
-                         ('word', 'n'), ]),
+    ("", []),
+    (
+        "n = 1",
+        [
+            ("value", "1"),
+            ("symbol", "="),
+            ("word", "n"),
+        ],
+    ),
+    (
+        "n = 1 @integer 1",
+        [
+            ("value", "1"),
+            ("symbol", "="),
+            ("word", "n"),
+        ],
+    ),
+    (
+        "n is 1",
+        [
+            ("value", "1"),
+            ("word", "is"),
+            ("word", "n"),
+        ],
+    ),
+    (
+        "n % 100 = 3..10",
+        [
+            ("value", "10"),
+            ("ellipsis", ".."),
+            ("value", "3"),
+            ("symbol", "="),
+            ("value", "100"),
+            ("symbol", "%"),
+            ("word", "n"),
+        ],
+    ),
 )
 
 
@@ -235,7 +266,7 @@ class PluralRuleParserTestCase(unittest.TestCase):
                              ('relation', ('in',
                                            ('mod', (self.n,
                                                     plural.value_node(100))),
-                                           (make_range_list((1, 19)))))))
+                                           (make_range_list((1, 19))))))),
                     ))
 
 
@@ -273,7 +304,7 @@ def test_gettext_compilation(locale):
     chars = 'ivwft'
     # Test that these rules are valid for this test; i.e. that they contain at least one
     # of the gettext-unsupported characters.
-    assert any((" " + ch + " ") in rule for ch in chars for rule in ru_rules.values())
+    assert any(f" {ch} " in rule for ch in chars for rule in ru_rules.values())
     # Then test that the generated value indeed does not contain these.
     ru_rules_gettext = plural.to_gettext(ru_rules)
     assert not any(ch in ru_rules_gettext for ch in chars)

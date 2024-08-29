@@ -1,0 +1,129 @@
+From 2f203ca7f5f8d12f9c045f1749017701b9c95ca0 Mon Sep 17 00:00:00 2001
+From: Aarni Koskela <akx@iki.fi>
+Date: Mon, 15 Apr 2024 17:04:18 +0300
+Subject: [PATCH] Use CLDR 44 and adjust tests to match new data
+
+---
+ babel/dates.py                  |  2 --
+ babel/numbers.py                |  4 ++--
+ babel/units.py                  |  4 ++--
+ scripts/download_import_cldr.py |  8 ++++----
+ tests/test_numbers.py           | 12 +++++++-----
+ tests/test_support.py           |  2 +-
+ 6 files changed, 16 insertions(+), 16 deletions(-)
+
+--- a/babel/dates.py
++++ b/babel/dates.py
+@@ -1511,8 +1511,6 @@
+         >>> format = DateTimeFormat(datetime(2022, 4, 28, 6, 27), 'zh_Hant')
+         >>> format.format_period('a', 1)
+         u'上午'
+-        >>> format.format_period('b', 1)
+-        u'清晨'
+         >>> format.format_period('B', 1)
+         u'清晨'
+ 
+--- a/babel/numbers.py
++++ b/babel/numbers.py
+@@ -418,7 +418,7 @@
+     >>> get_exponential_symbol('en_US')
+     u'E'
+     >>> get_exponential_symbol('ar_EG', numbering_system='default')
+-    u'اس'
++    u'أس'
+     >>> get_exponential_symbol('ar_EG', numbering_system='latn')
+     u'E'
+ 
+@@ -956,7 +956,7 @@
+     >>> format_scientific(10000, locale='en_US')
+     u'1E4'
+     >>> format_scientific(10000, locale='ar_EG', numbering_system='default')
+-    u'1اس4'
++    u'1أس4'
+ 
+     The format pattern can also be specified explicitly:
+ 
+--- a/babel/units.py
++++ b/babel/units.py
+@@ -248,8 +248,8 @@
+     >>> format_compound_unit(4, "meter", "ratakisko", length="short", locale="fi")
+     '4 m/ratakisko'
+ 
+-    >>> format_compound_unit(35, "minute", denominator_unit="fathom", locale="sv")
+-    '35 minuter per famn'
++    >>> format_compound_unit(35, "minute", denominator_unit="nautical-mile", locale="sv")
++    '35 minuter per nautisk mil'
+ 
+     >>> from babel.numbers import format_currency
+     >>> format_compound_unit(format_currency(35, "JPY", locale="de"), denominator_unit="liter", locale="de")
+--- a/scripts/download_import_cldr.py
++++ b/scripts/download_import_cldr.py
+@@ -9,10 +9,10 @@
+ import zipfile
+ from urllib.request import urlretrieve
+ 
+-URL = 'http://unicode.org/Public/cldr/43/cldr-common-43.0.zip'
+-FILENAME = 'cldr-common-43.0.zip'
+-# Via https://unicode.org/Public/cldr/43/hashes/SHASUM512
+-FILESUM = '930c64208d6f680d115bfa74a69445fb614910bb54233227b0b9ae85ddbce4db19e4ec863bf04ae9d4a11b2306aa7394e553384d7537487de8011f0e34877cef'
++URL = 'https://unicode.org/Public/cldr/44/cldr-common-44.0.zip'
++FILENAME = 'cldr-common-44.0.zip'
++# Via https://unicode.org/Public/cldr/44/hashes/SHASUM512
++FILESUM = 'f2cd8733948caf308d6e39eae21724da7f29f528f8969d456514e1e84ecd5f1e6936d0460414a968888bb1b597bc1ee723950ea47df5cba21a02bb14f96d18b6'
+ BLKSIZE = 131072
+ 
+ 
+--- a/tests/test_numbers.py
++++ b/tests/test_numbers.py
+@@ -164,7 +164,7 @@
+         assert numbers.format_compact_decimal(1000, locale='ja_JP', format_type="short") == '1000'
+         assert numbers.format_compact_decimal(9123, locale='ja_JP', format_type="short") == '9123'
+         assert numbers.format_compact_decimal(10000, locale='ja_JP', format_type="short") == '1万'
+-        assert numbers.format_compact_decimal(1234567, locale='ja_JP', format_type="long") == '123万'
++        assert numbers.format_compact_decimal(1234567, locale='ja_JP', format_type="short") == '123万'
+         assert numbers.format_compact_decimal(-1, locale='en_US', format_type="short") == '-1'
+         assert numbers.format_compact_decimal(-1234, locale='en_US', format_type="short", fraction_digits=2) == '-1.23K'
+         assert numbers.format_compact_decimal(-123456789, format_type='short', locale='en_US') == '-123M'
+@@ -373,8 +373,8 @@
+     assert numbers.get_exponential_symbol('en_US', numbering_system="default") == 'E'
+     assert numbers.get_exponential_symbol('ja_JP') == 'E'
+     assert numbers.get_exponential_symbol('ar_EG') == 'E'
+-    assert numbers.get_exponential_symbol('ar_EG', numbering_system="default") == 'اس'
+-    assert numbers.get_exponential_symbol('ar_EG', numbering_system="arab") == 'اس'
++    assert numbers.get_exponential_symbol('ar_EG', numbering_system="default") == 'أس'
++    assert numbers.get_exponential_symbol('ar_EG', numbering_system="arab") == 'أس'
+     assert numbers.get_exponential_symbol('ar_EG', numbering_system="latn") == 'E'
+ 
+ 
+@@ -593,8 +593,10 @@
+     assert (numbers.format_currency(2, 'EUR', locale='en_US', format_type='name')
+             == '2.00 euros')
+     # This tests that '{1} {0}' unitPatterns are found:
++    assert (numbers.format_currency(150, 'USD', locale='sw', format_type='name')
++            == 'dola za Marekani 150.00')
+     assert (numbers.format_currency(1, 'USD', locale='sw', format_type='name')
+-            == 'dola ya Marekani 1.00')
++            == '1.00 dola ya Marekani')
+     # This tests unicode chars:
+     assert (numbers.format_currency(1099.98, 'USD', locale='es_GT', format_type='name')
+             == 'dólares estadounidenses 1,099.98')
+@@ -689,7 +691,7 @@
+     assert numbers.format_scientific(4234567, '##0.#####E00', locale='en_US') == '4.23457E06'
+     assert numbers.format_scientific(4234567, '##0.##E00', locale='en_US') == '4.23E06'
+     assert numbers.format_scientific(42, '00000.000000E0000', locale='en_US') == '42000.000000E-0003'
+-    assert numbers.format_scientific(0.2, locale="ar_EG", numbering_system="default") == '2اس\u061c-1'
++    assert numbers.format_scientific(0.2, locale="ar_EG", numbering_system="default") == '2أس\u061c-1'
+ 
+ 
+ def test_default_scientific_format():
+--- a/tests/test_support.py
++++ b/tests/test_support.py
+@@ -345,7 +345,7 @@
+     def test_format_scientific(self):
+         assert support.Format('en_US').scientific(10000) == '1E4'
+         assert support.Format('en_US').scientific(Decimal("10000")) == '1E4'
+-        assert support.Format('ar_EG', numbering_system="default").scientific(10000) == '1اس4'
++        assert support.Format('ar_EG', numbering_system="default").scientific(10000) == '1أس4'
+ 
+ 
+ def test_lazy_proxy():

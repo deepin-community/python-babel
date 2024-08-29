@@ -1,6 +1,4 @@
 fix-sphinx-conf.py-to-avoid-intersphinx.patch
 0002-remove-google-fonts.patch
-0003-Revert-upstream-issue-621.patch
-0004-fix-tzdata.patch
-0005-fix-sphinx7.1.patch
-006-fix-test-format-time.patch
+0003-fix-tzdata.patch
+use-cldr-44.patch
