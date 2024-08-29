@@ -4,11 +4,12 @@ looking at improving test coverage.  They just verify that basic
 operations don't fail due to odd corner cases on any locale that
 we ship.
 """
-import decimal
 import datetime
+import decimal
+
 import pytest
 
-from babel import Locale, units, dates, numbers
+from babel import Locale, dates, numbers, units
 
 NUMBERS = (
     decimal.Decimal("-33.76"),  # Negative Decimal
@@ -42,9 +43,13 @@ def test_smoke_numbers(locale):
     locale = Locale.parse(locale)
     for number in NUMBERS:
         assert numbers.format_decimal(number, locale=locale)
+        assert numbers.format_decimal(number, locale=locale, numbering_system="default")
         assert numbers.format_currency(number, "EUR", locale=locale)
+        assert numbers.format_currency(number, "EUR", locale=locale, numbering_system="default")
         assert numbers.format_scientific(number, locale=locale)
+        assert numbers.format_scientific(number, locale=locale, numbering_system="default")
         assert numbers.format_percent(number / 100, locale=locale)
+        assert numbers.format_percent(number / 100, locale=locale, numbering_system="default")
 
 
 @pytest.mark.all_locales
@@ -53,3 +58,4 @@ def test_smoke_units(locale):
     for unit in ('length-meter', 'mass-kilogram', 'energy-calorie', 'volume-liter'):
         for number in NUMBERS:
             assert units.format_unit(number, measurement_unit=unit, locale=locale)
+            assert units.format_unit(number, measurement_unit=unit, locale=locale, numbering_system="default")

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (C) 2007-2011 Edgewall Software, 2013-2022 the Babel team
+# Copyright (C) 2007-2011 Edgewall Software, 2013-2023 the Babel team
 # All rights reserved.
 #
 # This software is licensed as described in the file LICENSE, which
@@ -14,7 +14,7 @@
 from optparse import OptionParser
 from pprint import pprint
 
-from babel.localedata import load, LocaleDataDict
+from babel.localedata import LocaleDataDict, load
 
 
 def main():
