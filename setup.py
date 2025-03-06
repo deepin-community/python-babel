@@ -1,12 +1,12 @@
 import subprocess
 import sys
 
-from setuptools import setup, Command
+from setuptools import Command, setup
 
 try:
     from babel import __version__
 except SyntaxError as exc:
-    sys.stderr.write("Unable to import Babel (%s). Are you running a supported version of Python?\n" % exc)
+    sys.stderr.write(f"Unable to import Babel ({exc}). Are you running a supported version of Python?\n")
     sys.exit(1)
 
 
@@ -25,7 +25,7 @@ class import_cldr(Command):
 
 
 setup(
-    name='Babel',
+    name='babel',
     version=__version__,
     description='Internationalization utilities',
     long_description='A collection of tools for internationalizing Python applications.',
@@ -33,7 +33,7 @@ setup(
     author_email='armin.ronacher@active-4.com',
     maintainer='Aarni Koskela',
     maintainer_email='akx@iki.fi',
-    license='BSD',
+    license='BSD-3-Clause',
     url='https://babel.pocoo.org/',
     project_urls={
         'Source': 'https://github.com/python-babel/babel',
@@ -47,24 +47,38 @@ setup(
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3 :: Only',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
         'Programming Language :: Python :: Implementation :: CPython',
         'Programming Language :: Python :: Implementation :: PyPy',
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
-    python_requires='>=3.6',
+    python_requires='>=3.8',
     packages=['babel', 'babel.messages', 'babel.localtime'],
+    package_data={"babel": ["py.typed"]},
     include_package_data=True,
     install_requires=[
         # This version identifier is currently necessary as
         # pytz otherwise does not install on pip 1.4 or
         # higher.
-        'pytz>=2015.7',
+        # Python 3.9 and later include zoneinfo which replaces pytz
+        'pytz>=2015.7; python_version<"3.9"',
     ],
+    extras_require={
+        'dev': [
+            "tzdata;sys_platform == 'win32'",
+            'backports.zoneinfo; python_version<"3.9"',
+            'freezegun~=1.0',
+            'jinja2>=3.0',
+            'pytest-cov',
+            'pytest>=6.0',
+            'pytz',
+            'setuptools',
+        ],
+    },
     cmdclass={'import_cldr': import_cldr},
     zip_safe=False,
     # Note when adding extractors: builtin extractors we also want to
@@ -76,13 +90,13 @@ setup(
     pybabel = babel.messages.frontend:main
 
     [distutils.commands]
-    compile_catalog = babel.messages.frontend:compile_catalog
-    extract_messages = babel.messages.frontend:extract_messages
-    init_catalog = babel.messages.frontend:init_catalog
-    update_catalog = babel.messages.frontend:update_catalog
+    compile_catalog = babel.messages.setuptools_frontend:compile_catalog
+    extract_messages = babel.messages.setuptools_frontend:extract_messages
+    init_catalog = babel.messages.setuptools_frontend:init_catalog
+    update_catalog = babel.messages.setuptools_frontend:update_catalog
 
     [distutils.setup_keywords]
-    message_extractors = babel.messages.frontend:check_message_extractors
+    message_extractors = babel.messages.setuptools_frontend:check_message_extractors
 
     [babel.checkers]
     num_plurals = babel.messages.checkers:num_plurals
@@ -92,5 +106,5 @@ setup(
     ignore = babel.messages.extract:extract_nothing
     python = babel.messages.extract:extract_python
     javascript = babel.messages.extract:extract_javascript
-    """
+    """,
 )

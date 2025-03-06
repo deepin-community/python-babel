@@ -1,0 +1,23 @@
+From: Alexandre Detiste <tchet@debian.org>
+Date: Tue, 12 Nov 2024 21:04:18 -0100
+Subject: [PATCH] Use CLDR 44 and adjust tests to match older data
+
+CLDR is now at 46.
+
+https://cldr.unicode.org/downloads/cldr-46
+
+Supplemental Data Changes
+ - Currency
+   - New currency code ZWG added
+
+--- a/tests/test_numbers.py
++++ b/tests/test_numbers.py
+@@ -250,7 +250,7 @@
+ 
+     assert list_currencies(locale='pa_Arab') == {'PKR', 'INR', 'EUR'}
+ 
+-    assert len(list_currencies()) == 306
++    assert len(list_currencies()) in (305, 306)
+ 
+ 
+ def test_validate_currency():

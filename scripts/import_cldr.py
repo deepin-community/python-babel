@@ -1,33 +1,29 @@
 #!/usr/bin/env python
 #
-# Copyright (C) 2007-2011 Edgewall Software, 2013-2022 the Babel team
+# Copyright (C) 2007-2011 Edgewall Software, 2013-2025 the Babel team
 # All rights reserved.
 #
 # This software is licensed as described in the file LICENSE, which
 # you should have received as part of this distribution. The terms
-# are also available at http://babel.edgewall.org/wiki/License.
+# are also available at https://github.com/python-babel/babel/blob/master/LICENSE.
 #
 # This software consists of voluntary contributions made by many
 # individuals. For the exact contribution history, see the revision
-# history and logs, available at http://babel.edgewall.org/log/.
+# history and logs, available at https://github.com/python-babel/babel/commits/master/.
 
 import collections
-from optparse import OptionParser
+import logging
 import os
 import pickle
 import re
 import sys
-import logging
-
-try:
-    from xml.etree import cElementTree as ElementTree
-except ImportError:
-    from xml.etree import ElementTree
+from optparse import OptionParser
+from xml.etree import ElementTree
 
 # Make sure we're using Babel source, and not some previously installed version
 CHECKOUT_ROOT = os.path.abspath(os.path.join(
     os.path.dirname(__file__),
-    '..'
+    '..',
 ))
 BABEL_PACKAGE_ROOT = os.path.join(CHECKOUT_ROOT, "babel")
 sys.path.insert(0, CHECKOUT_ROOT)
@@ -47,7 +43,7 @@ def _text(elem):
     for child in elem:
         buf.append(_text(child))
     buf.append(elem.tail or '')
-    return u''.join(filter(None, buf)).strip()
+    return ''.join(filter(None, buf)).strip()
 
 
 NAME_RE = re.compile(r"^\w+$")
@@ -59,7 +55,7 @@ NAME_MAP = {
     'eraAbbr': 'abbreviated',
     'eraNames': 'wide',
     'eraNarrow': 'narrow',
-    'timeFormats': 'time_formats'
+    'timeFormats': 'time_formats',
 }
 
 log = logging.getLogger("import_cldr")
@@ -133,7 +129,7 @@ def _time_to_seconds_past_midnight(time_expr):
         return None
     if time_expr.count(":") == 1:
         time_expr += ":00"
-    hour, minute, second = [int(p, 10) for p in time_expr.split(":")]
+    hour, minute, second = (int(p, 10) for p in time_expr.split(":"))
     return hour * 60 * 60 + minute * 60 + second
 
 
@@ -159,7 +155,8 @@ def write_datafile(path, data, dump_json=False):
         pickle.dump(data, outfile, 2)
     if dump_json:
         import json
-        with open(path + '.json', 'w') as outfile:
+
+        with open(f"{path}.json", "w") as outfile:
             json.dump(data, outfile, indent=4, default=debug_repr)
 
 
@@ -167,11 +164,11 @@ def main():
     parser = OptionParser(usage='%prog path/to/cldr')
     parser.add_option(
         '-f', '--force', dest='force', action='store_true', default=False,
-        help='force import even if destination file seems up to date'
+        help='force import even if destination file seems up to date',
     )
     parser.add_option(
         '-j', '--json', dest='dump_json', action='store_true', default=False,
-        help='also export debugging JSON dumps of locale data'
+        help='also export debugging JSON dumps of locale data',
     )
     parser.add_option(
         '-q', '--quiet', dest='quiet', action='store_true', default=bool(os.environ.get('BABEL_CLDR_QUIET')),
@@ -190,7 +187,7 @@ def main():
         srcdir=args[0],
         destdir=BABEL_PACKAGE_ROOT,
         force=bool(options.force),
-        dump_json=bool(options.dump_json)
+        dump_json=bool(options.dump_json),
     )
 
 
@@ -304,10 +301,27 @@ def parse_global(srcdir, sup):
         currency: tuple(sorted(regions)) for currency, regions in all_currencies.items()}
 
     # Explicit parent locales
-    for paternity in sup.findall('.//parentLocales/parentLocale'):
-        parent = paternity.attrib['parent']
-        for child in paternity.attrib['locales'].split():
-            parent_exceptions[child] = parent
+    # Since CLDR-43, there are multiple <parentLocales> statements, some of them with a `component="collations"` or
+    # `component="segmentations"` attribute; these indicate that only some language aspects should be inherited.
+    # (https://cldr.unicode.org/index/downloads/cldr-43)
+    #
+    # Ignore these for now,  as one of them even points to a locale that doesn't have a corresponding XML file (sr_ME)
+    # and we crash trying to load it.
+    # There is no XPath support to test for an absent attribute, so use Python to filter
+    for parentBlock in sup.findall('.//parentLocales'):
+        if parentBlock.attrib.get('component'):
+            # Consider only unqualified parent declarations
+            continue
+
+        for paternity in parentBlock.findall('./parentLocale'):
+            parent = paternity.attrib['parent']
+            if parent == 'root':
+                # Since CLDR-45, the 'root' parent locale uses 'localeRules="nonlikelyScript"' instead of
+                # 'locales'. This special case is handled in babel when loading locale data
+                # (https://cldr.unicode.org/index/downloads/cldr-45#h.5rbkhkncdqi9)
+                continue
+            for child in paternity.attrib['locales'].split():
+                parent_exceptions[child] = parent
 
     # Currency decimal and rounding digits
     for fraction in sup.findall('.//currencyData/fractions/info'):
@@ -361,8 +375,8 @@ def _process_local_datas(sup, srcdir, destdir, force=False, dump_json=False):
         if ext != '.xml':
             continue
 
-        full_filename = os.path.join(srcdir, 'main', filename)
-        data_filename = os.path.join(destdir, 'locale-data', stem + '.dat')
+        full_filename = os.path.join(srcdir, "main", filename)
+        data_filename = os.path.join(destdir, "locale-data", f"{stem}.dat")
 
         data = {}
         if not (force or need_conversion(data_filename, data, full_filename)):
@@ -375,12 +389,10 @@ def _process_local_datas(sup, srcdir, destdir, force=False, dump_json=False):
         if elem is not None:
             language = elem.attrib['type']
 
-        territory = None
+        territory = '001'  # world
         elem = tree.find('.//identity/territory')
         if elem is not None:
             territory = elem.attrib['type']
-        else:
-            territory = '001'  # world
         regions = territory_containment.get(territory, [])
 
         log.info(
@@ -390,7 +402,7 @@ def _process_local_datas(sup, srcdir, destdir, force=False, dump_json=False):
 
         locale_id = '_'.join(filter(None, [
             language,
-            territory != '001' and territory or None
+            territory != '001' and territory or None,
         ]))
 
         data['locale_id'] = locale_id
@@ -403,7 +415,8 @@ def _process_local_datas(sup, srcdir, destdir, force=False, dump_json=False):
         if locale_id in day_period_rules:
             data["day_period_rules"] = day_period_rules[locale_id]
 
-        parse_locale_display_names(data, tree)
+        is_global = ("_" not in locale_id)
+        parse_locale_display_names(data, tree, is_global=is_global)
         parse_list_patterns(data, tree)
         parse_dates(data, tree, sup, regions, territory)
 
@@ -423,6 +436,7 @@ def _process_local_datas(sup, srcdir, destdir, force=False, dump_json=False):
             parse_interval_formats(data, calendar)
 
         parse_number_symbols(data, tree)
+        parse_numbering_systems(data, tree)
         parse_decimal_formats(data, tree)
         parse_scientific_formats(data, tree)
         parse_percent_formats(data, tree)
@@ -437,10 +451,10 @@ def _process_local_datas(sup, srcdir, destdir, force=False, dump_json=False):
 
         unsupported_number_systems_string = ', '.join(sorted(data.pop('unsupported_number_systems')))
         if unsupported_number_systems_string:
-            log.warning('%s: unsupported number systems were ignored: %s' % (
-                locale_id,
-                unsupported_number_systems_string,
-            ))
+            log.warning(
+                f"{locale_id}: unsupported number systems were ignored: "
+                f"{unsupported_number_systems_string}",
+            )
 
         write_datafile(data_filename, data, dump_json=dump_json)
 
@@ -474,51 +488,63 @@ def _should_skip_elem(elem, type=None, dest=None):
     :param dest: Destination dict. May be elided to skip the dict check.
     :return: skip boolean
     """
-    if 'draft' in elem.attrib or 'alt' in elem.attrib:
+    if _is_draft_or_alt(elem):
         if dest is None or type in dest:
             return True
 
 
-def _import_type_text(dest, elem, type=None):
+def _is_draft_or_alt(elem) -> bool:
+    return 'draft' in elem.attrib or 'alt' in elem.attrib
+
+
+def _import_type_text(dest, elem, type=None, *, allow_variant_and_draft_fallback=True) -> None:
     """
     Conditionally import the element's inner text(s) into the `dest` dict.
 
-    The condition being, namely, that the element isn't a draft/alternate version
-    of a pre-existing element.
+    If `allow_variant_and_draft_fallback` is True, then the element may be imported
+    if there otherwise isn't a pre-existing element of the same type.
 
     :param dest: Destination dict
     :param elem: XML element.
     :param type: Override type. (By default, the `type` attr of the element.)
-    :return:
+    :param allow_variant_and_draft_fallback: See above.
+    :return: Nothing.
     """
     if type is None:
         type = elem.attrib['type']
-    if _should_skip_elem(elem, type, dest):
+
+    # Already have this, nothing to do.
+    if type in dest:
+        return
+
+    if not allow_variant_and_draft_fallback and _is_draft_or_alt(elem):
+        # Not allowed to use a draft/alternate here.
         return
     dest[type] = _text(elem)
 
 
-def parse_locale_display_names(data, tree):
+def parse_locale_display_names(data, tree, *, is_global: bool):
     territories = data.setdefault('territories', {})
     for elem in tree.findall('.//territories/territory'):
-        _import_type_text(territories, elem)
+        _import_type_text(territories, elem, allow_variant_and_draft_fallback=is_global)
     languages = data.setdefault('languages', {})
     for elem in tree.findall('.//languages/language'):
-        _import_type_text(languages, elem)
+        _import_type_text(languages, elem, allow_variant_and_draft_fallback=is_global)
     variants = data.setdefault('variants', {})
     for elem in tree.findall('.//variants/variant'):
-        _import_type_text(variants, elem)
+        _import_type_text(variants, elem, allow_variant_and_draft_fallback=is_global)
     scripts = data.setdefault('scripts', {})
     for elem in tree.findall('.//scripts/script'):
-        _import_type_text(scripts, elem)
+        _import_type_text(scripts, elem, allow_variant_and_draft_fallback=is_global)
 
 
 def parse_list_patterns(data, tree):
     list_patterns = data.setdefault('list_patterns', {})
-    for listType in tree.findall('.//listPatterns/listPattern'):
-        by_type = list_patterns.setdefault(listType.attrib.get('type', 'standard'), {})
-        for listPattern in listType.findall('listPatternPart'):
-            by_type[listPattern.attrib['type']] = _text(listPattern)
+    for list_pattern_el in tree.findall('.//listPatterns/listPattern'):
+        pattern_type = list_pattern_el.attrib.get('type', 'standard')
+        for pattern_part_el in list_pattern_el.findall('listPatternPart'):
+            pattern_part_type = pattern_part_el.attrib['type']
+            list_patterns.setdefault(pattern_type, {})[pattern_part_type] = _text(pattern_part_el)
 
 
 def parse_dates(data, tree, sup, regions, territory):
@@ -528,25 +554,25 @@ def parse_dates(data, tree, sup, regions, territory):
         if _should_skip_elem(elem):
             continue
         territories = elem.attrib['territories'].split()
-        if territory in territories or any([r in territories for r in regions]):
+        if territory in territories or any(r in territories for r in regions):
             week_data['min_days'] = int(elem.attrib['count'])
     for elem in supelem.findall('firstDay'):
         if _should_skip_elem(elem):
             continue
         territories = elem.attrib['territories'].split()
-        if territory in territories or any([r in territories for r in regions]):
+        if territory in territories or any(r in territories for r in regions):
             week_data['first_day'] = weekdays[elem.attrib['day']]
     for elem in supelem.findall('weekendStart'):
         if _should_skip_elem(elem):
             continue
         territories = elem.attrib['territories'].split()
-        if territory in territories or any([r in territories for r in regions]):
+        if territory in territories or any(r in territories for r in regions):
             week_data['weekend_start'] = weekdays[elem.attrib['day']]
     for elem in supelem.findall('weekendEnd'):
         if _should_skip_elem(elem):
             continue
         territories = elem.attrib['territories'].split()
-        if territory in territories or any([r in territories for r in regions]):
+        if territory in territories or any(r in territories for r in regions):
             week_data['weekend_end'] = weekdays[elem.attrib['day']]
     zone_formats = data.setdefault('zone_formats', {})
     for elem in tree.findall('.//timeZoneNames/gmtFormat'):
@@ -607,7 +633,7 @@ def parse_calendar_months(data, calendar):
                 elif elem.tag == 'alias':
                     ctxts[width_type] = Alias(
                         _translate_alias(['months', ctxt_type, width_type],
-                                         elem.attrib['path'])
+                                         elem.attrib['path']),
                     )
 
 
@@ -625,7 +651,7 @@ def parse_calendar_days(data, calendar):
                 elif elem.tag == 'alias':
                     ctxts[width_type] = Alias(
                         _translate_alias(['days', ctxt_type, width_type],
-                                         elem.attrib['path'])
+                                         elem.attrib['path']),
                     )
 
 
@@ -658,7 +684,7 @@ def parse_calendar_eras(data, calendar):
             elif elem.tag == 'alias':
                 eras[width_type] = Alias(
                     _translate_alias(['eras', width_type],
-                                     elem.attrib['path'])
+                                     elem.attrib['path']),
                 )
 
 
@@ -686,13 +712,13 @@ def parse_calendar_date_formats(data, calendar):
                     continue
                 try:
                     date_formats[type] = dates.parse_pattern(
-                        str(elem.findtext('dateFormat/pattern'))
+                        str(elem.findtext('dateFormat/pattern')),
                     )
                 except ValueError as e:
                     log.error(e)
             elif elem.tag == 'alias':
                 date_formats = Alias(_translate_alias(
-                    ['date_formats'], elem.attrib['path'])
+                    ['date_formats'], elem.attrib['path']),
                 )
 
 
@@ -706,13 +732,13 @@ def parse_calendar_time_formats(data, calendar):
                     continue
                 try:
                     time_formats[type] = dates.parse_pattern(
-                        str(elem.findtext('timeFormat/pattern'))
+                        str(elem.findtext('timeFormat/pattern')),
                     )
                 except ValueError as e:
                     log.error(e)
             elif elem.tag == 'alias':
                 time_formats = Alias(_translate_alias(
-                    ['time_formats'], elem.attrib['path'])
+                    ['time_formats'], elem.attrib['path']),
                 )
 
 
@@ -731,7 +757,7 @@ def parse_calendar_datetime_skeletons(data, calendar):
                     log.error(e)
             elif elem.tag == 'alias':
                 datetime_formats = Alias(_translate_alias(
-                    ['datetime_formats'], elem.attrib['path'])
+                    ['datetime_formats'], elem.attrib['path']),
                 )
             elif elem.tag == 'availableFormats':
                 for datetime_skeleton in elem.findall('dateFormatItem'):
@@ -742,14 +768,27 @@ def parse_calendar_datetime_skeletons(data, calendar):
 
 def parse_number_symbols(data, tree):
     number_symbols = data.setdefault('number_symbols', {})
-    for symbol_elem in tree.findall('.//numbers/symbols'):
-        if _should_skip_number_elem(data, symbol_elem):  # TODO: Support other number systems
+    for symbol_system_elem in tree.findall('.//numbers/symbols'):
+        number_system = symbol_system_elem.get('numberSystem')
+        if not number_system:
             continue
 
-        for elem in symbol_elem.findall('./*'):
-            if _should_skip_elem(elem):
+        for symbol_element in symbol_system_elem.findall('./*'):
+            if _should_skip_elem(symbol_element):
                 continue
-            number_symbols[elem.tag] = str(elem.text)
+
+            number_symbols.setdefault(number_system, {})[symbol_element.tag] = str(symbol_element.text)
+
+
+def parse_numbering_systems(data, tree):
+    default_number_system_node = tree.find('.//numbers/defaultNumberingSystem')
+    if default_number_system_node is not None:
+        data['default_numbering_system'] = default_number_system_node.text
+
+    numbering_systems = data.setdefault('numbering_systems', {})
+    other_numbering_systems_node = tree.find('.//numbers/otherNumberingSystems') or []
+    for system in other_numbering_systems_node:
+        numbering_systems[system.tag] = system.text
 
 
 def parse_decimal_formats(data, tree):
@@ -773,8 +812,6 @@ def parse_decimal_formats(data, tree):
 
                     # These are mapped into a `compact_decimal_formats` dictionary
                     # with the format {length: {count: {multiplier: pattern}}}.
-
-                    # TODO: Add support for formatting them.
                     compact_decimal_formats = data.setdefault('compact_decimal_formats', {})
                     length_map = compact_decimal_formats.setdefault(length_type, {})
                     length_count_map = length_map.setdefault(pattern_el.attrib['count'], {})
@@ -907,7 +944,7 @@ def parse_interval_formats(data, tree):
                 if item_sub.tag == "greatestDifference":
                     skel_data[item_sub.attrib["id"]] = split_interval_pattern(item_sub.text)
                 else:
-                    raise NotImplementedError("Not implemented: %s(%r)" % (item_sub.tag, item_sub.attrib))
+                    raise NotImplementedError(f"Not implemented: {item_sub.tag}({item_sub.attrib!r})")
 
 
 def parse_currency_formats(data, tree):
@@ -920,21 +957,34 @@ def parse_currency_formats(data, tree):
             curr_length_type = length_elem.attrib.get('type')
             for elem in length_elem.findall('currencyFormat'):
                 type = elem.attrib.get('type')
-                if curr_length_type:
-                    # Handle `<currencyFormatLength type="short">`, etc.
-                    # TODO(3.x): use nested dicts instead of colon-separated madness
-                    type = '%s:%s' % (type, curr_length_type)
                 if _should_skip_elem(elem, type, currency_formats):
                     continue
                 for child in elem.iter():
                     if child.tag == 'alias':
                         currency_formats[type] = Alias(
                             _translate_alias(['currency_formats', elem.attrib['type']],
-                                             child.attrib['path'])
+                                             child.attrib['path']),
                         )
                     elif child.tag == 'pattern':
-                        pattern = str(child.text)
-                        currency_formats[type] = numbers.parse_pattern(pattern)
+                        pattern_type = child.attrib.get('type')
+                        if child.attrib.get('draft') or child.attrib.get('alt'):
+                            # Skip drafts and alternates.
+                            # The `noCurrency` alternate for currencies was added in CLDR 42.
+                            continue
+                        pattern = numbers.parse_pattern(str(child.text))
+                        if pattern_type:
+                            # This is a compact currency format, see:
+                            # https://www.unicode.org/reports/tr35/tr35-45/tr35-numbers.html#Compact_Number_Formats
+
+                            # These are mapped into a `compact_currency_formats` dictionary
+                            # with the format {length: {count: {multiplier: pattern}}}.
+                            compact_currency_formats = data.setdefault('compact_currency_formats', {})
+                            length_map = compact_currency_formats.setdefault(curr_length_type, {})
+                            length_count_map = length_map.setdefault(child.attrib['count'], {})
+                            length_count_map[pattern_type] = pattern
+                        else:
+                            # Regular currency format
+                            currency_formats[type] = pattern
 
 
 def parse_currency_unit_patterns(data, tree):
@@ -984,7 +1034,6 @@ def parse_measurement_systems(data, tree):
         type = measurement_system.attrib['type']
         if not _should_skip_elem(measurement_system, type=type, dest=measurement_systems):
             _import_type_text(measurement_systems, measurement_system, type=type)
-
 
 
 if __name__ == '__main__':

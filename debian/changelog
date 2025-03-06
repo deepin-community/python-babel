@@ -1,8 +1,32 @@
-python-babel (2.10.3-3deepin1) unstable; urgency=medium
+python-babel (2.17.0-1) unstable; urgency=medium
 
-  * add 006-fix-test-format-time.patch.
+  * Team upload.
+  * New upstream version 2.17.0 (Closes: #1090266)
+  * Refresh patches
+  * Remove extraneous dependency on python3-pkg-resources
 
- -- LiChengGang <lichenggang@uniontech.com>  Tue, 19 Dec 2023 16:54:40 +0800
+ -- Alexandre Detiste <tchet@debian.org>  Sun, 02 Feb 2025 23:00:06 +0100
+
+python-babel (2.16.0-1) unstable; urgency=medium
+
+  * Team Upload.
+  * New upstream version 2.16.0 (Closes: #1083600)
+  * Adapt CLDR 44 patch to also support upcoming CLDR 46.
+  * Use dh-sequence-python3
+
+ -- Alexandre Detiste <tchet@debian.org>  Tue, 12 Nov 2024 20:53:41 +0100
+
+python-babel (2.14.0-1) unstable; urgency=medium
+
+  * Team Upload.
+  * New upstream version 2.14.0
+  * Drop merged patches
+  * Refresh existing patches
+  * Add upstream patch to adjust data/tests in accordance
+    with cldr 44 (Closes: #1060931)
+  * Drop myself from uploaders
+
+ -- Nilesh Patra <nilesh@iki.fi>  Tue, 16 Apr 2024 18:14:49 +0530
 
 python-babel (2.10.3-3) unstable; urgency=medium
 

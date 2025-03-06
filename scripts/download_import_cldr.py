@@ -1,70 +1,50 @@
 #!/usr/bin/env python3
 
 import contextlib
-import os
-import sys
-import shutil
 import hashlib
-import zipfile
+import os
+import shutil
 import subprocess
-try:
-    from urllib.request import urlretrieve
-except ImportError:
-    from urllib import urlretrieve
+import sys
+import zipfile
+from urllib.request import urlretrieve
 
-
-URL = 'http://unicode.org/Public/cldr/41/cldr-common-41.0.zip'
-FILENAME = 'cldr-common-41.0.zip'
-# Via https://unicode.org/Public/cldr/41/hashes/SHASUM512
-FILESUM = 'c64f3338e292962817b043dd11e9c47f533c9b70d432f83e80654e20f4937c72b37e66a60485df43f734b1ff94ebf0452547a063076917889303c9653b4d6ce5'
+URL = 'https://unicode.org/Public/cldr/46/cldr-common-46.0.zip'
+FILENAME = 'cldr-common-46.0.zip'
+# Via https://unicode.org/Public/cldr/45/hashes/SHASUM512.txt
+FILESUM = '316d644b79a4976d4da57d59ca57c689b339908fe61bb49110bfe1a9269c94144cb27322a0ea080398e6dc4c54a16752fd1ca837e14c054b3a6806b1ef9d3ec3'
 BLKSIZE = 131072
-
-
-def get_terminal_width():
-    try:
-        import fcntl
-        import termios
-        import struct
-        fd = sys.stdin.fileno()
-        cr = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234'))
-        return cr[1]
-    except Exception:
-        return 80
 
 
 def reporthook(block_count, block_size, total_size):
     bytes_transmitted = block_count * block_size
-    cols = get_terminal_width()
+    cols = shutil.get_terminal_size().columns
     buffer = 6
     percent = float(bytes_transmitted) / (total_size or 1)
     done = int(percent * (cols - buffer))
-    sys.stdout.write('\r')
-    sys.stdout.write(' ' + '=' * done + ' ' * (cols - done - buffer))
-    sys.stdout.write('% 4d%%' % (percent * 100))
+    bar = ('=' * done).ljust(cols - buffer)
+    sys.stdout.write(f'\r{bar}{int(percent * 100): 4d}%')
     sys.stdout.flush()
 
 
-def log(message, *args):
-    if args:
-        message = message % args
-    sys.stderr.write(message + '\n')
+def log(message):
+    sys.stderr.write(f'{message}\n')
 
 
 def is_good_file(filename):
     if not os.path.isfile(filename):
-        log('Local copy \'%s\' not found', filename)
+        log(f"Local copy '{filename}' not found")
         return False
     h = hashlib.sha512()
     with open(filename, 'rb') as f:
-        while 1:
+        while True:
             blk = f.read(BLKSIZE)
             if not blk:
                 break
             h.update(blk)
         digest = h.hexdigest()
         if digest != FILESUM:
-            raise RuntimeError('Checksum mismatch: %r != %r'
-                               % (digest, FILESUM))
+            raise RuntimeError(f'Checksum mismatch: {digest!r} != {FILESUM!r}')
         else:
             return True
 
@@ -79,27 +59,29 @@ def main():
     show_progress = (False if os.environ.get("BABEL_CLDR_NO_DOWNLOAD_PROGRESS") else sys.stdout.isatty())
 
     while not is_good_file(zip_path):
-        log("Downloading '%s' from %s", FILENAME, URL)
-        if os.path.isfile(zip_path):
-            os.remove(zip_path)
-        urlretrieve(URL, zip_path, (reporthook if show_progress else None))
+        log(f"Downloading '{FILENAME}' from {URL}")
+        tmp_path = f"{zip_path}.tmp"
+        urlretrieve(URL, tmp_path, (reporthook if show_progress else None))
+        os.replace(tmp_path, zip_path)
         changed = True
         print()
     common_path = os.path.join(cldr_path, 'common')
 
     if changed or not os.path.isdir(common_path):
         if os.path.isdir(common_path):
-            log('Deleting old CLDR checkout in \'%s\'', cldr_path)
+            log(f"Deleting old CLDR checkout in '{cldr_path}'")
             shutil.rmtree(common_path)
 
-        log('Extracting CLDR to \'%s\'', cldr_path)
+        log(f"Extracting CLDR to '{cldr_path}'")
         with contextlib.closing(zipfile.ZipFile(zip_path)) as z:
             z.extractall(cldr_path)
 
     subprocess.check_call([
         sys.executable,
         os.path.join(scripts_path, 'import_cldr.py'),
-        common_path])
+        common_path,
+        *sys.argv[1:],
+    ])
 
 
 if __name__ == '__main__':
