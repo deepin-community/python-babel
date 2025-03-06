@@ -4,11 +4,10 @@ Priority: optional
 Maintainer: Debian Python Team <team+python@tracker.debian.org>
 Uploaders:
  Christoph Haas <haas@debian.org>,
- Thomas Goirand <zigo@debian.org>,
- Nilesh Patra <nilesh@debian.org>
+ Thomas Goirand <zigo@debian.org>
 Build-Depends:
  debhelper-compat (= 13),
- dh-python,
+ dh-sequence-python3,
  python3-sphinx,
  python3-all,
  python3-pytest,
@@ -62,7 +61,6 @@ Pre-Depends:
  ${misc:Pre-Depends},
 Depends:
  python-babel-localedata (= ${source:Version}),
- python3-pkg-resources,
  ${misc:Depends},
  ${python3:Depends},
 Built-Using:

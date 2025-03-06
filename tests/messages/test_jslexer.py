@@ -3,7 +3,9 @@ from babel.messages import jslexer
 
 def test_unquote():
     assert jslexer.unquote_string('""') == ''
-    assert jslexer.unquote_string(r'"h\u00ebllo"') == u"hëllo"
+    assert jslexer.unquote_string(r'"h\u00ebllo"') == "hëllo"
+    assert jslexer.unquote_string(r'"h\xebllo"') == "hëllo"
+    assert jslexer.unquote_string(r'"\xebb"') == "ëb"
 
 
 def test_dollar_in_identifier():
@@ -15,7 +17,7 @@ def test_dotted_name():
         ('name', 'foo.bar', 1),
         ('operator', '(', 1),
         ('name', 'quux', 1),
-        ('operator', ')', 1)
+        ('operator', ')', 1),
     ]
 
 
@@ -28,7 +30,7 @@ def test_dotted_name_end():
 def test_template_string():
     assert list(jslexer.tokenize("gettext `foo\"bar\"p`", template_string=True)) == [
         ('name', 'gettext', 1),
-        ('template_string', '`foo"bar"p`', 1)
+        ('template_string', '`foo"bar"p`', 1),
     ]
 
 
@@ -119,5 +121,5 @@ def test_jsx():
         ('operator', '}', 7),
         ('jsx_tag', '/>', 7),
         ('jsx_tag', '</comp2', 8),
-        ('operator', '>', 8)
+        ('operator', '>', 8),
     ]

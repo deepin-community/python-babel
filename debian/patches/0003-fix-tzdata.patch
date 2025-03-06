@@ -1,0 +1,104 @@
+Description: tzdata's new update in debian has removed support for US/* timezones
+Author: Nilesh Patra <nilesh@debian.org>
+Bug-Debian: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1052858
+Last-Update: 2023-10-10
+--- a/babel/dates.py
++++ b/babel/dates.py
+@@ -728,7 +728,7 @@
+     ...                 locale='fr_FR')
+     'dimanche 1 avril 2007, 17:30:00 heure d’été d’Europe centrale'
+     >>> format_datetime(dt, "yyyy.MM.dd G 'at' HH:mm:ss zzz",
+-    ...                 tzinfo=get_timezone('US/Eastern'), locale='en')
++    ...                 tzinfo=get_timezone('America/New_York'), locale='en')
+     u'2007.04.01 AD at 11:30:00 EDT'
+ 
+     :param datetime: the `datetime` object; if `None`, the current date and
+@@ -780,7 +780,7 @@
+     >>> t = _localize(tzinfo, t)
+     >>> format_time(t, format='full', tzinfo=tzinfo, locale='fr_FR')
+     '15:30:00 heure d’été d’Europe centrale'
+-    >>> format_time(t, "hh 'o''clock' a, zzzz", tzinfo=get_timezone('US/Eastern'),
++    >>> format_time(t, "hh 'o''clock' a, zzzz", tzinfo=get_timezone('America/New_York'),
+     ...             locale='en')
+     u"09 o'clock AM, Eastern Daylight Time"
+ 
+@@ -801,7 +801,7 @@
+     >>> format_time(t, format='full', tzinfo=get_timezone('Europe/Paris'),
+     ...             locale='fr_FR')  # doctest: +SKIP
+     u'15:30:00 heure normale d\u2019Europe centrale'
+-    >>> format_time(t, format='full', tzinfo=get_timezone('US/Eastern'),
++    >>> format_time(t, format='full', tzinfo=get_timezone('America/New_York'),
+     ...             locale='en_US')  # doctest: +SKIP
+     u'3:30:00\u202fPM Eastern Standard Time'
+ 
+--- a/babel/support.py
++++ b/babel/support.py
+@@ -90,7 +90,7 @@
+ 
+         >>> from datetime import datetime
+         >>> from babel.dates import get_timezone
+-        >>> fmt = Format('en_US', tzinfo=get_timezone('US/Eastern'))
++        >>> fmt = Format('en_US', tzinfo=get_timezone('America/New_York'))
+         >>> fmt.datetime(datetime(2007, 4, 1, 15, 30))
+         u'Apr 1, 2007, 11:30:00\u202fAM'
+         """
+@@ -105,7 +105,7 @@
+ 
+         >>> from datetime import datetime
+         >>> from babel.dates import get_timezone
+-        >>> fmt = Format('en_US', tzinfo=get_timezone('US/Eastern'))
++        >>> fmt = Format('en_US', tzinfo=get_timezone('America/New_York'))
+         >>> fmt.time(datetime(2007, 4, 1, 15, 30))
+         u'11:30:00\u202fAM'
+         """
+--- a/docs/dates.rst
++++ b/docs/dates.rst
+@@ -285,7 +285,7 @@
+     >>> from datetime import time
+     >>> from babel.dates import get_timezone, UTC
+     >>> dt = datetime(2007, 4, 1, 15, 30, tzinfo=UTC)
+-    >>> eastern = get_timezone('US/Eastern')
++    >>> eastern = get_timezone('America/New_York')
+     >>> format_datetime(dt, 'H:mm Z', tzinfo=eastern, locale='en_US')
+     u'11:30 -0400'
+ 
+--- a/tests/test_dates.py
++++ b/tests/test_dates.py
+@@ -329,7 +329,7 @@
+         assert dates.format_time(
+             datetime(2007, 4, 1, 15, 30),
+             'long',
+-            tzinfo=timezone_getter('US/Eastern'),
++            tzinfo=timezone_getter('America/New_York'),
+             locale='en',
+         ) == '11:30:00 AM EDT'
+ 
+@@ -577,7 +577,7 @@
+     )
+     custom = dates.format_datetime(
+         dt, "yyyy.MM.dd G 'at' HH:mm:ss zzz",
+-        tzinfo=timezone_getter('US/Eastern'),
++        tzinfo=timezone_getter('America/New_York'),
+         locale='en',
+     )
+     assert custom == '2007.04.01 AD at 11:30:00 EDT'
+@@ -592,7 +592,7 @@
+             "03 o'clock PM")
+ 
+     paris = timezone_getter('Europe/Paris')
+-    eastern = timezone_getter('US/Eastern')
++    eastern = timezone_getter('America/New_York')
+ 
+     t = _localize(paris, datetime(2007, 4, 1, 15, 30))
+     fr = dates.format_time(t, format='full', tzinfo=paris, locale='fr_FR')
+--- a/tests/test_support_format.py
++++ b/tests/test_support_format.py
+@@ -13,7 +13,7 @@
+ 
+ @pytest.fixture
+ def en_us_format(timezone_getter) -> support.Format:
+-    return support.Format('en_US', tzinfo=timezone_getter('US/Eastern'))
++    return support.Format('en_US', tzinfo=timezone_getter('America/New_York'))
+ 
+ 
+ def test_format_datetime(en_us_format):

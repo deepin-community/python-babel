@@ -1,6 +1,288 @@
 Babel Changelog
 ===============
 
+Version 2.17.0
+--------------
+
+Happy 2025! This release is being made from FOSDEM 2025, in Brussels, Belgium.
+
+Thank you to all contributors, new and old,
+and here's to another great year of internationalization and localization!
+
+Features
+~~~~~~~~
+
+* CLDR: Babel now uses CLDR 46, by @tomasr8 in :gh:`1145`
+* Dates: Allow specifying an explicit format in parse_date/parse_time by @tomasr8 in :gh:`1131`
+* Dates: More alternate characters are now supported by `format_skeleton`. By @tomasr8 in :gh:`1122`
+* Dates: Support short and narrow formats for format_timedelta when using `add_direction`, by @akx in :gh:`1163`
+* Messages: .po files now enclose white spaces in filenames like GNU gettext does. By @Dunedan in :gh:`1105`, and @tomasr8 in :gh:`1120`
+* Messages: Initial support for `Message.python_brace_format`, by @tomasr8 in :gh:`1169`
+* Numbers: LC_MONETARY is now preferred when formatting currencies, by @akx in :gh:`1173`
+
+Bugfixes
+~~~~~~~~
+
+* Dates: Make seconds optional in `parse_time` time formats by @tomasr8 in :gh:`1141`
+* Dates: Replace `str.index` with `str.find` by @tomasr8 in :gh:`1130`
+* Dates: Strip extra leading slashes in `/etc/localtime` by @akx in :gh:`1165`
+* Dates: Week numbering and formatting of dates with week numbers was repaired by @jun66j5 in :gh:`1179`
+* General: Improve handling for `locale=None` by @akx in :gh:`1164`
+* General: Remove redundant assignment in `Catalog.__setitem__` by @tomasr8 in :gh:`1167`
+* Messages: Fix extracted lineno with nested calls, by @dylankiss in :gh:`1126`
+* Messages: Fix of list index out of range when translations is empty, by @gabe-sherman in :gh:`1135`
+* Messages: Fix the way obsolete messages are stored by @tomasr8 in :gh:`1132`
+* Messages: Simplify `read_mo` logic regarding `catalog.charset` by @tomasr8 in :gh:`1148`
+* Messages: Use the first matching method & options, rather than first matching method & last options, by @jpmckinney in :gh:`1121`
+
+Deprecation and compatibility
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Dates: Fix deprecation warnings for `datetime.utcnow()` by @tomasr8 in :gh:`1119`
+* Docs: Adjust docs/conf.py to add compatibility with sphinx 8 by @hrnciar in :gh:`1155`
+* General: Import `Literal` from the typing module by @tomasr8 in :gh:`1175`
+* General: Replace `OrderedDict` with just `dict` by @tomasr8 in :gh:`1149`
+* Messages: Mark `wraptext` deprecated; use `TextWrapper` directly in `write_po` by @akx in :gh:`1140`
+
+Infrastructure
+~~~~~~~~~~~~~~
+
+* Add tzdata as dev dependency and sync with tox.ini by @wandrew004 in :gh:`1159`
+* Duplicate test code was deleted by @mattdiaz007 in :gh:`1138`
+* Increase test coverage of the `python_format` checker by @tomasr8 in :gh:`1176`
+* Small cleanups by @akx in :gh:`1160`, :gh:`1166`, :gh:`1170` and :gh:`1172`
+* Update CI to use python 3.13 and Ubuntu 24.04 by @tomasr8 in :gh:`1153`
+
+Version 2.16.0
+--------------
+
+Features
+~~~~~~~~
+
+* CLDR: Upgrade to CLDR 45 by @tomasr8 in :gh:`1077`
+* Lists: Support list format fallbacks by @akx in :gh:`1099`
+* Messages: Initial support for reading mapping configuration as TOML by @akx in :gh:`1108`
+
+Bugfixes
+~~~~~~~~
+
+* CLDR: Do not allow substituting alternates or drafts in derived locales by @akx in :gh:`1113`
+* Core: Allow falling back to modifier-less locale data by @akx in :gh:`1104`
+* Core: Allow use of importlib.metadata for finding entrypoints by @akx in :gh:`1102`
+* Dates: Avoid crashing on importing localtime when TZ is malformed by @akx in :gh:`1100`
+* Messages: Allow parsing .po files that have an extant but empty Language header by @akx in :gh:`1101`
+* Messages: Fix ``--ignore-dirs`` being incorrectly read (#1094) by @john-psina and @Edwin18 in :gh:`1052` and :gh:`1095`
+* Messages: Make pgettext search plurals when translation is not found by @tomasr8 in :gh:`1085`
+
+Infrastructure
+~~~~~~~~~~~~~~
+
+* Replace deprecated `ast.Str` with `ast.Constant` by @tomasr8 in :gh:`1083`
+* CI fixes by @akx in :gh:`1080`, :gh:`1097`, :gh:`1103`, :gh:`1107`
+* Test on Python 3.13 beta releases by @akx in
+* Normalize package name to lower-case in setup.py by @akx in :gh:`1110`
+
+Documentation
+~~~~~~~~~~~~~
+
+* Add a mention to the docs that `format_skeleton(..., fuzzy=True)` may raise by @tomasr8 in :gh:`1106`
+* Two hyperlinks (to CLDR) and some typos by @buhtz in :gh:`1115`
+
+
+Version 2.15.0
+--------------
+
+Python version support
+~~~~~~~~~~~~~~~~~~~~~~
+
+* Babel 2.15.0 will require Python 3.8 or newer. (:gh:`1048`)
+
+Features
+~~~~~~~~
+
+* CLDR: Upgrade to CLDR 44 (:gh:`1071`) (@akx)
+* Dates: Support for the "fall back to short format" logic for time delta formatting (:gh:`1075`) (@akx)
+* Message: More versatile .po IO functions (:gh:`1068`) (@akx)
+* Numbers: Improved support for alternate spaces when parsing numbers (:gh:`1007`) (@ronnix's first contribution)
+
+Infrastructure
+~~~~~~~~~~~~~~
+
+* Upgrade GitHub Actions (:gh:`1054`) (@cclauss's first contribution)
+* The Unicode license is now included in `locale-data` and in the documentation (:gh:`1074`) (@akx)
+
+Version 2.14.0
+--------------
+
+Upcoming deprecation
+~~~~~~~~~~~~~~~~~~~~
+
+* This version, Babel 2.14, is the last version of Babel to support Python 3.7.
+  Babel 2.15 will require Python 3.8 or newer.
+* We had previously announced Babel 2.13 to have been the last version to support
+  Python 3.7, but being able to use CLDR 43 with Python 3.7 was deemed important
+  enough to keep supporting the EOL Python version for one more release.
+
+Possibly backwards incompatible changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* ``Locale.number_symbols`` will now have first-level keys for each numbering system.
+  Since the implicit default numbering system still is ``"latn"``, what had previously
+  been e.g. ``Locale.number_symbols['decimal']`` is now ``Locale.number_symbols['latn']['decimal']``.
+* Babel no longer directly depends on either ``distutils`` or ``setuptools``; if you had been
+  using the Babel setuptools command extensions, you would need to explicitly depend on ``setuptools`` –
+  though given you're running ``setup.py`` you probably already do.
+
+Features
+~~~~~~~~
+
+* CLDR/Numbers: Add support of local numbering systems for number symbols by @kajte in :gh:`1036`
+* CLDR: Upgrade to CLDR 43 by @rix0rrr in :gh:`1043`
+* Frontend: Allow last_translator to be passed as an option to extract_message by @AivGitHub in :gh:`1044`
+* Frontend: Decouple `pybabel` CLI frontend from distutils/setuptools by @akx in :gh:`1041`
+* Numbers: Improve parsing of malformed decimals by @Olunusib and @akx in :gh:`1042`
+
+Infrastructure
+~~~~~~~~~~~~~~
+
+* Enforce trailing commas (enable Ruff COM rule and autofix) by @akx in :gh:`1045`
+* CI: use GitHub output formats by @akx in :gh:`1046`
+
+Version 2.13.1
+--------------
+
+This is a patch release to fix a few bugs.
+
+Fixes
+~~~~~
+
+* Fix a typo in ``_locales_to_names`` by @Dl84 in :gh:`1038` (issue :gh:`1037`)
+* Fix ``setuptools`` dependency for Python 3.12 by @opryprin in :gh:`1033`
+
+Version 2.13.0
+--------------
+
+Upcoming deprecation (reverted)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* It was previously announced that this version, Babel 2.13, would be the last version of
+  Babel to support Python 3.7. Babel 2.14 will still support Python 3.7.
+
+Features
+~~~~~~~~
+
+* Add flag to ignore POT-Creation-Date for updates by @joeportela in :gh:`999`
+* Support 't' specifier in keywords by @jeanas in :gh:`1015`
+* Add f-string parsing for Python 3.12 (PEP 701) by @encukou in :gh:`1027`
+
+Fixes
+~~~~~
+
+* Various typing-related fixes by @akx in :gh:`979`, in :gh:`978`, :gh:`981`,  :gh:`983`
+* babel.messages.catalog: deduplicate _to_fuzzy_match_key logic by @akx in :gh:`980`
+* Freeze format_time() tests to a specific date to fix test failures by @mgorny in :gh:`998`
+* Spelling and grammar fixes by @scop in :gh:`1008`
+* Renovate lint tools by @akx in :gh:`1017`, :gh:`1028`
+* Use SPDX license identifier by @vargenau in :gh:`994`
+* Use aware UTC datetimes internally by @scop in :gh:`1009`
+
+New Contributors
+~~~~~~~~~~~~~~~~
+
+* @mgorny made their first contribution in :gh:`998`
+* @vargenau made their first contribution in :gh:`994`
+* @joeportela made their first contribution in :gh:`999`
+* @encukou made their first contribution in :gh:`1027`
+
+Version 2.12.1
+--------------
+
+Fixes
+~~~~~
+
+* Version 2.12.0 was missing the ``py.typed`` marker file. Thanks to Alex Waygood for the fix! :gh:`975`
+* The copyright year in all files was bumped to 2023.
+
+Version 2.12.0
+--------------
+
+Deprecations & breaking changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Python 3.6 is no longer supported (:gh:`919`) - Aarni Koskela
+* The `get_next_timezone_transition` function is no more (:gh:`958`) - Aarni Koskela
+* `Locale.parse()` will no longer return `None`; it will always return a Locale or raise an exception.
+  Passing in `None`, though technically allowed by the typing, will raise. (:gh:`966`)
+
+New features
+~~~~~~~~~~~~
+
+* CLDR: Babel now uses CLDR 42 (:gh:`951`) - Aarni Koskela
+* Dates: `pytz` is now optional; Babel will prefer it but will use `zoneinfo` when available. (:gh:`940`) - @ds-cbo
+* General: Babel now ships type annotations, thanks to Jonah Lawrence's work in multiple PRs.
+* Locales: @modifiers are now retained when parsing locales (:gh:`947`) - martin f. krafft
+* Messages: JavaScript template string expression extraction is now smarter. (:gh:`939`) - Johannes Wilm
+* Numbers: NaN and Infinity are now better supported (:gh:`955`) - Jonah Lawrence
+* Numbers: Short compact currency formats are now supported (:gh:`926`) - Jonah Lawrence
+* Numbers: There's now a `Format.compact_decimal` utility function. (:gh:`921`) - Jonah Lawrence
+
+Bugfixes
+~~~~~~~~
+
+* Dates: The cache for parsed datetime patterns is now bounded (:gh:`967`) - Aarni Koskela
+* Messages: Fuzzy candidate matching accuracy is improved (:gh:`970`) - Jean Abou Samra
+* Numbers: Compact singular formats and patterns with no numbers work correctly (:gh:`930`, :gh:`932`) - Jonah Lawrence, Jun Omae
+
+Improvements & cleanup
+~~~~~~~~~~~~~~~~~~~~~~
+
+* Dates: `babel.dates.UTC` is now an alias for `datetime.timezone.utc` (:gh:`957`) - Aarni Koskela
+* Dates: `babel.localtime` was slightly cleaned up. (:gh:`952`) - Aarni Koskela
+* Documentation: Documentation was improved by Maciej Olko, Jonah Lawrence, lilinjie, and Aarni Koskela.
+* Infrastructure: Babel is now being linted with pre-commit and ruff. - Aarni Koskela
+
+Version 2.11.0
+--------------
+
+Upcoming deprecation
+~~~~~~~~~~~~~~~~~~~~
+
+* This version, Babel 2.11, is the last version of Babel to support Python 3.6.
+  Babel 2.12 will require Python 3.7 or newer.
+
+Improvements
+~~~~~~~~~~~~
+
+* Support for hex escapes in JavaScript string literals :gh:`877` - Przemyslaw Wegrzyn
+* Add support for formatting decimals in compact form :gh:`909` - Jonah Lawrence
+* Adapt parse_date to handle ISO dates in ASCII format :gh:`842` - Eric L.
+* Use `ast` instead of `eval` for Python string extraction :gh:`915` - Aarni Koskela
+    * This also enables extraction from static f-strings.
+      F-strings with expressions are silently ignored (but won't raise an error as they used to).
+
+Infrastructure
+~~~~~~~~~~~~~~
+
+* Tests: Use regular asserts and ``pytest.raises()`` :gh:`875` – Aarni Koskela
+* Wheels are now built in GitHub Actions :gh:`888` – Aarni Koskela
+* Small improvements to the CLDR downloader script :gh:`894` – Aarni Koskela
+* Remove antiquated `__nonzero__` methods :gh:`896` - Nikita Sobolev
+* Remove superfluous `__unicode__` declarations :gh:`905` - Lukas Juhrich
+* Mark package compatible with Python 3.11 :gh:`913` - Aarni Koskela
+* Quiesce pytest warnings :gh:`916` - Aarni Koskela
+
+Bugfixes
+~~~~~~~~
+
+* Use email.Message for pofile header parsing instead of the deprecated ``cgi.parse_header`` function. :gh:`876` – Aarni Koskela
+* Remove determining time zone via systemsetup on macOS :gh:`914` - Aarni Koskela
+
+Documentation
+~~~~~~~~~~~~~
+
+* Update Python versions in documentation :gh:`898` - Raphael Nestler
+* Align BSD-3 license with OSI template :gh:`912` - Lukas Kahwe Smith
+
 Version 2.10.3
 --------------
 
@@ -355,8 +637,8 @@ Version 2.3.4
 Bugfixes
 ~~~~~~~~
 
-* CLDR: The lxml library is no longer used for CLDR importing, so it should not cause strange failures either. Thanks to @aronbierbaum for the bug report and @jtwang for the fix. (https://github.com/python-babel/babel/pull/393)
-* CLI: Every last single CLI usage regression should now be gone, and both distutils and stand-alone CLIs should work as they have in the past. Thanks to @paxswill and @ajaeger for bug reports. (https://github.com/python-babel/babel/pull/389)
+* CLDR: The lxml library is no longer used for CLDR importing, so it should not cause strange failures either. Thanks to @aronbierbaum for the bug report and @jtwang for the fix. (:gh:`393`)
+* CLI: Every last single CLI usage regression should now be gone, and both distutils and stand-alone CLIs should work as they have in the past. Thanks to @paxswill and @ajaeger for bug reports. (:gh:`389`)
 
 Version 2.3.3
 -------------
@@ -366,7 +648,7 @@ Version 2.3.3
 Bugfixes
 ~~~~~~~~
 
-* CLI: Usage regressions that had snuck in between 2.2 and 2.3 should be no more. (https://github.com/python-babel/babel/pull/386) Thanks to @ajaeger, @sebdiem and @jcristovao for bug reports and patches.
+* CLI: Usage regressions that had snuck in between 2.2 and 2.3 should be no more. (:gh:`386`) Thanks to @ajaeger, @sebdiem and @jcristovao for bug reports and patches.
 
 Version 2.3.2
 -------------
@@ -391,34 +673,34 @@ Version 2.3
 Internal improvements
 ~~~~~~~~~~~~~~~~~~~~~
 
-* The CLI frontend and Distutils commands use a shared implementation (https://github.com/python-babel/babel/pull/311)
-* PyPy3 is supported (https://github.com/python-babel/babel/pull/343)
+* The CLI frontend and Distutils commands use a shared implementation (:gh:`311`)
+* PyPy3 is supported (:gh:`343`)
 
 Features
 ~~~~~~~~
 
-* CLDR: Add an API for territory language data (https://github.com/python-babel/babel/pull/315)
-* Core: Character order and measurement system data is imported and exposed (https://github.com/python-babel/babel/pull/368)
-* Dates: Add an API for time interval formatting (https://github.com/python-babel/babel/pull/316)
-* Dates: More pattern formats and lengths are supported (https://github.com/python-babel/babel/pull/347)
-* Dates: Period IDs are imported and exposed (https://github.com/python-babel/babel/pull/349)
-* Dates: Support for date-time skeleton formats has been added (https://github.com/python-babel/babel/pull/265)
-* Dates: Timezone formatting has been improved (https://github.com/python-babel/babel/pull/338)
-* Messages: JavaScript extraction now supports dotted names, ES6 template strings and JSX tags (https://github.com/python-babel/babel/pull/332)
-* Messages: npgettext is recognized by default (https://github.com/python-babel/babel/pull/341)
-* Messages: The CLI learned to accept multiple domains (https://github.com/python-babel/babel/pull/335)
-* Messages: The extraction commands now accept filenames in addition to directories (https://github.com/python-babel/babel/pull/324)
-* Units: A new API for unit formatting is implemented (https://github.com/python-babel/babel/pull/369)
+* CLDR: Add an API for territory language data (:gh:`315`)
+* Core: Character order and measurement system data is imported and exposed (:gh:`368`)
+* Dates: Add an API for time interval formatting (:gh:`316`)
+* Dates: More pattern formats and lengths are supported (:gh:`347`)
+* Dates: Period IDs are imported and exposed (:gh:`349`)
+* Dates: Support for date-time skeleton formats has been added (:gh:`265`)
+* Dates: Timezone formatting has been improved (:gh:`338`)
+* Messages: JavaScript extraction now supports dotted names, ES6 template strings and JSX tags (:gh:`332`)
+* Messages: npgettext is recognized by default (:gh:`341`)
+* Messages: The CLI learned to accept multiple domains (:gh:`335`)
+* Messages: The extraction commands now accept filenames in addition to directories (:gh:`324`)
+* Units: A new API for unit formatting is implemented (:gh:`369`)
 
 Bugfixes
 ~~~~~~~~
 
-* Core: Mixed-case locale IDs work more reliably (https://github.com/python-babel/babel/pull/361)
-* Dates: S...S formats work correctly now (https://github.com/python-babel/babel/pull/360)
-* Messages: All messages are now sorted correctly if sorting has been specified (https://github.com/python-babel/babel/pull/300)
-* Messages: Fix the unexpected behavior caused by catalog header updating (e0e7ef1) (https://github.com/python-babel/babel/pull/320)
-* Messages: Gettext operands are now generated correctly (https://github.com/python-babel/babel/pull/295)
-* Messages: Message extraction has been taught to detect encodings better (https://github.com/python-babel/babel/pull/274)
+* Core: Mixed-case locale IDs work more reliably (:gh:`361`)
+* Dates: S...S formats work correctly now (:gh:`360`)
+* Messages: All messages are now sorted correctly if sorting has been specified (:gh:`300`)
+* Messages: Fix the unexpected behavior caused by catalog header updating (e0e7ef1) (:gh:`320`)
+* Messages: Gettext operands are now generated correctly (:gh:`295`)
+* Messages: Message extraction has been taught to detect encodings better (:gh:`274`)
 
 Version 2.2
 -----------
@@ -564,7 +846,7 @@ Version 1.0
 - Explicitly sort instead of using sorted() and don't assume ordering
   (Jython compatibility).
 - Removed ValueError raising for string formatting message checkers if the
-  string does not contain any string formattings (:trac:`150`).
+  string does not contain any string formatting (:trac:`150`).
 - Fix Serbian plural forms (:trac:`213`).
 - Small speed improvement in format_date() (:trac:`216`).
 - Fix so frontend.CommandLineInterface.run does not accumulate logging
@@ -641,7 +923,7 @@ Version 0.9.6
 - Explicitly sort instead of using sorted() and don't assume ordering
   (Python 2.3 and Jython compatibility).
 - Removed ValueError raising for string formatting message checkers if the
-  string does not contain any string formattings (:trac:`150`).
+  string does not contain any string formatting (:trac:`150`).
 - Fix Serbian plural forms (:trac:`213`).
 - Small speed improvement in format_date() (:trac:`216`).
 - Fix number formatting for locales where CLDR specifies alt or draft
